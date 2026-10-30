@@ -84,7 +84,7 @@
                 radial-gradient(circle at calc(100% - 25px) 40px, #7f8c8d 5px, transparent 6px),
                 radial-gradient(circle at 25px calc(100% - 25px), #7f8c8d 5px, transparent 6px),
                 radial-gradient(circle at calc(100% - 25px) calc(100% - 25px), #7f8c8d 5px, transparent 6px);
-            border-radius: 0px; /* Никаких круглых углов */
+            border-radius: 0px;
             padding: 3rem 4rem; max-width: 1200px; width: 95%; max-height: 85vh;
             /* Жесткая тень в стиле Brutalism */
             box-shadow: 15px 15px 0px rgba(0,0,0,0.8);
@@ -154,25 +154,16 @@
         .toom { color: var(--danger-red); margin-bottom: 5px; }
         .globus { color: var(--success-green); }
 
-        /* Брутальная кнопка НАЗАД */
+        /* Брутальная кнопка НАЗАД в виде квадрата со стрелкой (вверху слева) */
         #backBtn {
-            position: fixed; bottom: 30px; left: 30px; z-index: 100;
+            position: fixed; top: 25px; left: 25px; z-index: 100;
             background: var(--warning-yellow); border: 3px solid #000;
-            color: #000; font-weight: 700; padding: 10px 25px;
-            font-family: 'Oswald', sans-serif; font-size: 1.2rem; cursor: pointer;
-            box-shadow: 4px 4px 0px rgba(0,0,0,1); transition: all 0.1s;
-            text-transform: uppercase; display: flex; align-items: center; gap: 10px;
+            color: #000; padding: 0; width: 55px; height: 55px;
+            cursor: pointer; box-shadow: 4px 4px 0px rgba(0,0,0,1); transition: all 0.1s;
+            display: flex; justify-content: center; align-items: center;
         }
         #backBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px rgba(0,0,0,1); }
         #backBtn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px rgba(0,0,0,1); }
-
-        .click-hint {
-            position: fixed; bottom: 35px; right: 30px; color: #fff; font-size: 1.2rem;
-            font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase;
-            background: #000; padding: 5px 15px; border: 2px solid var(--warning-yellow);
-            animation: blink 1.5s infinite; pointer-events: none;
-        }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* Списки и блоки с информацией */
         .info-block {
@@ -189,11 +180,10 @@
     <!-- Сигнальная лента загрузки -->
     <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
 
-    <button id="backBtn" onclick="prevSlide(event)">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
-        ZURÜCK
+    <!-- Квадратная кнопка НАЗАД -->
+    <button id="backBtn" onclick="prevSlide(event)" title="Zurück">
+        <svg width="28" height="28" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
     </button>
-    <div class="click-hint">KLICKEN ➡</div>
 
     <div class="slide-container" id="presentation">
 
