@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badezimmer Renovierung - Leon & Yaroslav</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #1a1a2e;
+            color: #333;
+            user-select: none;
+        }
+
+        /* Красивый фон из интернета */
+        .background {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1620626011761-996317b8d101?q=80&w=2069&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px) brightness(0.6);
+            z-index: -1;
+            transform: scale(1.1); /* Чтобы края не размывались внутрь */
+        }
+
+        .slide-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: scale(0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        /* Эффект матового стекла для карточек презентации */
+        .content-box {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 1100px;
+            width: 90%;
+            max-height: 85vh;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 { color: #2c3e50; font-size: 2.5rem; margin-bottom: 10px; }
+        h2 { color: #e74c3c; font-size: 1.8rem; margin-top: 0; border-bottom: 2px solid #e74c3c; padding-bottom: 10px;}
+        p { font-size: 1.1rem; line-height: 1.5; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .item-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid #3498db;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .item-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #eee; /* Заглушка, пока нет картинки */
+        }
+
+        .item-card strong {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .price-compare {
+            font-size: 0.9rem;
+            width: 100%;
+            margin-top: 5px;
+            border-top: 1px dashed #ccc;
+            padding-top: 5px;
+        }
+
+        .price-compare div { margin-bottom: 3px; }
+        .toom { color: #c0392b; font-weight: bold; }
+        .globus { color: #27ae60; font-weight: bold; }
+
+        /* Кнопка НАЗАД */
+        #backBtn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 1rem;
+            transition: background 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        #backBtn:hover { background: rgba(0, 0, 0, 0.8); }
+
+        /* Подсказка для клика */
+        .click-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background"></div>
+
+    <button id="backBtn" onclick="prevSlide(event)">⬅ Zurück</button>
+    <div class="click-hint">Klicken um weiterzugehen ➡</div>
+
+    <div class="slide-container" id="presentation">
+
+        <!-- Slide 1: Intro -->
+        <div class="slide active">
+            <div class="content-box">
+                <h1>Badezimmer Renovierung</h1>
+                <h2>Preisvergleich & Planung</h2>
+                <p><strong>Projekt von:</strong> Leon und Yaroslav</p>
+                <p><strong>Märkte:</strong> Toom (Henstedt-Ulzburg) vs. Globus (Kaltenkirchen)</p>
+                <br>
+                <p><em>Aufgabe: Alte Fliesen raus, verputzen, abdichten, neu fliesen (Wand halbhoch & Boden).<br>Wir haben alle Materialien und Werkzeuge verglichen!</em></p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Flächenberechnung -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>1. Flächenberechnung</h2>
+                <p style="text-align: left;">Bevor wir eingekauft haben, mussten wir die Flächen berechnen:</p>
+                <div style="text-align: left; background:#f8f9fa; padding:15px; border-radius:10px;">
+                    <ul>
+                        <li><strong>Wände (Halbhoch 1,3m):</strong> 25m * 1,3m = 32,5 m²</li>
+                        <li><strong>Abzug Tür:</strong> 0,9m * 1,3m = 1,17 m²</li>
+                        <li><strong>Netto Wandfläche:</strong> 31,33 m²</li>
+                        <li><strong>Fußboden:</strong> 13,4 m²</li>
+                        <li><strong>Gesamtfläche zum Fliesen:</strong> ca. 44,73 m²</li>
+                    </ul>
+                    <p><strong>Fazit:</strong> Wir benötigen ca. <strong>50 m² Fliesen</strong> (inkl. 10% Verschnitt).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Materialien Teil 1 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>2. Materialien & Preise (Teil 1)</h2>
+                <div class="grid">
+                    <div class="item-card">
+                        <img src="images/fliesen.webp" alt="Fliesen" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Wand- & Bodenfliesen</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 6,99 € / m²</div>
+                            <div class="globus">Globus: 6,99 € / m²</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/tiefengrund.webp" alt="Tiefengrund" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Tiefengrund</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 43,99 €</div>
+                            <div class="globus">Globus: 34,99 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/rotband.webp" alt="Rotband" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Haftputzgips Rotband (30kg)</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 11,99 €</div>
+                            <div class="globus">Globus: 11,99 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/ausgleichsmasse.webp" alt="Ausgleichsmasse" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Bodenausgleichsmasse</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: Nicht gefunden</div>
+                            <div class="globus">Globus: 26,99 € (20kg)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Materialien Teil 2 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>3. Materialien & Preise (Teil 2)</h2>
+                <div class="grid">
+                    <div class="item-card">
+                        <img src="images/flexkleber.webp" alt="Flexkleber" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Flexkleber</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 25,99 € (30kg)</div>
+                            <div class="globus">Globus: 19,99 € (20kg)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/fugenmoertel.webp" alt="Fuge" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Fugenmörtel / Flexfuge</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 22,99 € (25kg)</div>
+                            <div class="globus">Globus: 27,49 € (15kg)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/dichtband.webp" alt="Dichtband" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Dichtband-Set</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 24,99 € (10m)</div>
+                            <div class="globus">Globus: 24,99 € (5m)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/silikon.webp" alt="Silikon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'">
+                        <strong>Sanitärsilikon (300ml)</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 12,99 €</div>
+                            <div class="globus">Globus: 12,99 €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Werkzeuge Teil 1 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>4. Werkzeuge A-Z (Teil 1)</h2>
+                <div class="grid">
+                    <div class="item-card">
+                        <img src="images/abdeckplane.webp" alt="Plane">
+                        <strong>A - Abdeckplane (20m²)</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 3,59 €</div>
+                            <div class="globus">Globus: 3,59 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/bohrhammer.webp" alt="Bohrhammer">
+                        <strong>B - Bohrhammer</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 104,99 €</div>
+                            <div class="globus">Globus: 89,00 € - 104,00 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/bleistift.webp" alt="Bleistift">
+                        <strong>B - Bleistift</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 1,99 € (Groß)</div>
+                            <div class="globus">Globus: 1,99 € (4 Stk.)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/eimer.webp" alt="Eimer">
+                        <strong>E - Bau- / Leereimer</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 2,99 €</div>
+                            <div class="globus">Globus: 4,49 €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Werkzeuge Teil 2 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>5. Werkzeuge A-Z (Teil 2)</h2>
+                <div class="grid">
+                    <div class="item-card">
+                        <img src="images/fliesenschneider.webp" alt="Fliesenschneider">
+                        <strong>F - Fliesenschneid-Maschine</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 70,99 € (Einhell)</div>
+                            <div class="globus">Globus: 84,99 € (TC 600)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/kellen.webp" alt="Kellen">
+                        <strong>K - Putzkelle / Kellen-Set</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 6,99 € - 12,99 €</div>
+                            <div class="globus">Globus: 16,99 € (Set)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/waschset.webp" alt="Waschset">
+                        <strong>F - Fliesenwaschset</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 34,99 €</div>
+                            <div class="globus">Globus: 30,49 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/zollstock.webp" alt="Zollstock">
+                        <strong>G - Gliedermaßstab (2m)</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 4,99 €</div>
+                            <div class="globus">Globus: 3,99 €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Werkzeuge Teil 3 -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>6. Werkzeuge A-Z (Teil 3)</h2>
+                <div class="grid">
+                    <div class="item-card">
+                        <img src="images/hammer.webp" alt="Hammer">
+                        <strong>H - Hammer & K - Kartuschenpresse</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 12,79 € & 4,99 €</div>
+                            <div class="globus">Globus: 11,59 € & 8,99 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/ruehrquirl.webp" alt="Rührquirl">
+                        <strong>R - Rührquirl & M - Meißel</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 11,49 € & (Vergessen)</div>
+                            <div class="globus">Globus: 9,99 € & 8,49 €</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/arbeitsschutz.webp" alt="Schutz">
+                        <strong>S - Schutzbrille / Staubmaske</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 16,98 € (Zusammen)</div>
+                            <div class="globus">Globus: 17,99 € (Set)</div>
+                        </div>
+                    </div>
+                    <div class="item-card">
+                        <img src="images/wasserwaage.webp" alt="Wasserwaage">
+                        <strong>W - Wasserwaage & Z - Zahnkelle</strong>
+                        <div class="price-compare">
+                            <div class="toom">Toom: 11,99 € & 7,99 €</div>
+                            <div class="globus">Globus: 12,99 € & 7,99 €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Zeitplan -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>7. Zeitplan & Trocknungszeiten</h2>
+                <div style="text-align: left; padding: 10px 20px;">
+                    <p><strong>Schritt 1:</strong> Alte Fliesen herausstemmen (Bohrhammer, Meißel) & entsorgen.</p>
+                    <p><strong>Schritt 2:</strong> Tiefengrund auftragen. <em>Trocknungszeit: 4-24 Stunden.</em></p>
+                    <p><strong>Schritt 3:</strong> Wände (Rotband) und Boden (Ausgleichsmasse) verputzen. <em>Trocknung: 24-48 Std.</em></p>
+                    <p><strong>Schritt 4:</strong> Dichtband einarbeiten für den Nassbereich.</p>
+                    <p><strong>Schritt 5:</strong> Fliesen verlegen (Flexkleber & Zahnkelle). <em>Boden 24 Std. nicht betreten!</em></p>
+                    <p><strong>Schritt 6:</strong> Fugenmörtel auftragen & abwaschen (Fliesenwaschset). <em>Trocknung: 12-24 Std.</em></p>
+                    <p><strong>Schritt 7:</strong> Silikon ziehen (Kartuschenpresse) & neue Armatur montieren. <em>Trocknung: 24 Std.</em></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Fazit -->
+        <div class="slide">
+            <div class="content-box">
+                <h2>8. Fazit: Welcher Markt ist besser?</h2>
+                <p>Nach unserem Preisvergleich haben wir folgendes festgestellt:</p>
+                <div style="display:flex; justify-content: space-around; margin-top:20px; text-align:left;">
+                    <div style="background:#ffebee; padding:20px; border-radius:10px; width:45%;">
+                        <h3 style="color:#c0392b; margin-top:0;">Toom Baumarkt</h3>
+                        <ul>
+                            <li>Oft günstigere Eigenmarken (z.B. Kartuschenpresse, Eimer).</li>
+                            <li>Tiefengrund deutlich teurer (43,99€ vs 34,99€).</li>
+                            <li>Ausgleichsmasse war leider nicht zu finden.</li>
+                        </ul>
+                    </div>
+                    <div style="background:#e8f5e9; padding:20px; border-radius:10px; width:45%;">
+                        <h3 style="color:#27ae60; margin-top:0;">Globus Baumarkt</h3>
+                        <ul>
+                            <li>Gute und günstige Sets (Kellen-Set, Arbeitsschutz-Set).</li>
+                            <li>Maschinen (Bohrhammer) teilweise günstiger.</li>
+                            <li>Fugenmörtel etwas teurer, dafür "Premium Qualität".</li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 style="margin-top:30px;">Unsere Entscheidung:</h3>
+                <p><strong>Es lohnt sich zu mischen!</strong> Schwere Baustoffe und Sets bei Globus kaufen, Kleinigkeiten (Eimer, Bleistift, Presse) bei Toom.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        // Клик по экрану - следующий слайд
+        document.body.addEventListener('click', function(e) {
+            // Если кликнули по кнопке "Назад" - игнорируем, для нее есть своя функция
+            if (e.target.id === 'backBtn') return;
+
+            if (currentSlide < slides.length - 1) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide++;
+                slides[currentSlide].classList.add('active');
+            }
+        });
+
+        // Кнопка назад (мисклик)
+        function prevSlide(e) {
+            e.stopPropagation(); // Останавливает срабатывание клика по фону
+            if (currentSlide > 0) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide--;
+                slides[currentSlide].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
