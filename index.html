@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Badezimmer Renovierung - Bauprojekt</title>
     <style>
-        /* Строгие строительные шрифты */
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&display=swap');
 
         :root {
@@ -26,7 +25,6 @@
             user-select: none;
         }
 
-        /* Настоящий фон со стройки из интернета */
         .bg-construction {
             position: fixed; top: -2%; left: -2%; width: 104%; height: 104%;
             background: linear-gradient(rgba(15, 20, 25, 0.8), rgba(15, 20, 25, 0.85)),
@@ -37,7 +35,6 @@
             filter: grayscale(20%);
         }
 
-        /* Строительная сигнальная лента (Прогресс-бар) */
         .progress-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 10px;
             background: #222; z-index: 100; border-bottom: 2px solid #000;
@@ -56,7 +53,6 @@
 
         .slide-container { width: 100%; height: 100%; position: relative; }
 
-        /* Суровая анимация падения бетонных блоков */
         .slide {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -74,11 +70,9 @@
         .slide.exit { transform: translateY(50px); opacity: 0; }
         .slide.enter-back { transform: translateY(50px); opacity: 0; }
 
-        /* Жесткий индустриальный блок (Бетон + Металл) */
         .content-box {
             background-color: var(--concrete-light);
             border: 4px solid var(--text-dark);
-            /* Эффект болтов по углам */
             background-image:
                 radial-gradient(circle at 25px 40px, #7f8c8d 5px, transparent 6px),
                 radial-gradient(circle at calc(100% - 25px) 40px, #7f8c8d 5px, transparent 6px),
@@ -86,14 +80,12 @@
                 radial-gradient(circle at calc(100% - 25px) calc(100% - 25px), #7f8c8d 5px, transparent 6px);
             border-radius: 0px;
             padding: 3rem 4rem; max-width: 1200px; width: 95%; max-height: 85vh;
-            /* Жесткая тень в стиле Brutalism */
             box-shadow: 15px 15px 0px rgba(0,0,0,0.8);
             position: relative;
             overflow-y: auto; overflow-x: hidden;
             color: var(--text-dark);
         }
 
-        /* Сигнальная лента вверху карточки */
         .content-box::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 15px;
             background: repeating-linear-gradient(45deg, var(--warning-yellow), var(--warning-yellow) 15px, #000 15px, #000 30px);
@@ -104,83 +96,48 @@
         .content-box::-webkit-scrollbar-thumb { background: var(--warning-yellow); border: 2px solid #000; }
         .content-box::-webkit-scrollbar-track { background: var(--concrete-dark); }
 
-        /* Типографика как на чертежах */
         h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; margin-top: 0; }
         h1 { font-size: 4.5rem; letter-spacing: 2px; margin-bottom: 10px; line-height: 1.1; }
-
-        h2 {
-            font-size: 2.2rem;
-            display: inline-block;
-            border-bottom: 5px solid var(--warning-yellow);
-            padding-bottom: 5px; margin-bottom: 20px;
-        }
-
+        h2 { font-size: 2.2rem; display: inline-block; border-bottom: 5px solid var(--warning-yellow); padding-bottom: 5px; margin-bottom: 20px; }
         p { font-size: 1.2rem; line-height: 1.6; font-weight: 500; }
 
-        /* Сетка для инструментов */
-        .grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 25px; margin-top: 25px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-top: 25px; }
 
-        /* Карточки инструментов - Стиль "Складская маркировка" */
         .item-card {
-            background: #ffffff;
-            border: 3px solid var(--text-dark);
-            padding: 12px;
-            position: relative;
-            /* Жесткая тень */
-            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
-            transition: transform 0.1s, box-shadow 0.1s;
+            background: #ffffff; border: 3px solid var(--text-dark); padding: 12px;
+            position: relative; box-shadow: 6px 6px 0px rgba(0,0,0,0.2); transition: transform 0.1s, box-shadow 0.1s;
         }
         .item-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px rgba(0,0,0,0.3); }
+        .item-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid var(--text-dark); margin-bottom: 10px; background: #eee; }
+        .item-card strong { display: block; font-size: 1.2rem; font-family: 'Oswald', sans-serif; text-align: center; margin-bottom: 5px; text-transform: uppercase; }
 
-        /* Строго квадратные картинки */
-        .item-card img {
-            width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
-            border: 2px solid var(--text-dark); margin-bottom: 10px;
-            background: #eee;
+        /* Новый стиль для количества */
+        .menge-badge {
+            background: #000; color: var(--warning-yellow); text-align: center;
+            font-weight: bold; padding: 5px; margin-bottom: 10px; font-family: 'Oswald', sans-serif;
+            border: 1px solid #000;
         }
 
-        .item-card strong {
-            display: block; font-size: 1.2rem; font-family: 'Oswald', sans-serif;
-            text-align: center; margin-bottom: 10px; text-transform: uppercase;
-        }
-
-        .price-compare {
-            font-size: 1rem; background: var(--concrete-light); padding: 10px;
-            border: 2px dashed #7f8c8d; font-weight: 710;
-        }
+        .price-compare { font-size: 1rem; background: var(--concrete-light); padding: 10px; border: 2px dashed #7f8c8d; font-weight: 710; }
         .toom { color: var(--danger-red); margin-bottom: 5px; }
         .globus { color: var(--success-green); }
 
-        /* Брутальная кнопка НАЗАД в виде квадрата со стрелкой (вверху слева) */
         #backBtn {
             position: fixed; top: 25px; left: 25px; z-index: 100;
-            background: var(--warning-yellow); border: 3px solid #000;
-            color: #000; padding: 0; width: 55px; height: 55px;
-            cursor: pointer; box-shadow: 4px 4px 0px rgba(0,0,0,1); transition: all 0.1s;
-            display: flex; justify-content: center; align-items: center;
+            background: var(--warning-yellow); border: 3px solid #000; color: #000; padding: 0; width: 55px; height: 55px;
+            cursor: pointer; box-shadow: 4px 4px 0px rgba(0,0,0,1); transition: all 0.1s; display: flex; justify-content: center; align-items: center;
         }
         #backBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px rgba(0,0,0,1); }
         #backBtn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px rgba(0,0,0,1); }
 
-        /* Списки и блоки с информацией */
-        .info-block {
-            background: #fff; border: 3px solid #000; padding: 20px;
-            box-shadow: 6px 6px 0px rgba(0,0,0,0.1); margin-bottom: 15px;
-        }
+        .info-block { background: #fff; border: 3px solid #000; padding: 20px; box-shadow: 6px 6px 0px rgba(0,0,0,0.1); margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <!-- Фон из интернета (Стройка) -->
     <div class="bg-construction"></div>
-
-    <!-- Сигнальная лента загрузки -->
     <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
 
-    <!-- Квадратная кнопка НАЗАД -->
     <button id="backBtn" onclick="prevSlide(event)" title="Zurück">
         <svg width="28" height="28" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
     </button>
@@ -227,6 +184,7 @@
                     <div class="item-card">
                         <img src="images/fliesen.webp" alt="Fliesen">
                         <strong>Fliesen</strong>
+                        <div class="menge-badge">MENGE: 50 m²</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 6,99 €/m²</div>
                             <div class="globus">GLOBUS: 6,99 €/m²</div>
@@ -235,6 +193,7 @@
                     <div class="item-card">
                         <img src="images/tiefengrund.webp" alt="Tiefengrund">
                         <strong>Tiefengrund</strong>
+                        <div class="menge-badge">MENGE: 10 Liter</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 43,99 €</div>
                             <div class="globus">GLOBUS: 34,99 €</div>
@@ -243,6 +202,7 @@
                     <div class="item-card">
                         <img src="images/rotband.webp" alt="Rotband">
                         <strong>Putz (Rotband)</strong>
+                        <div class="menge-badge">MENGE: 12 Säcke (30kg)</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 11,99 €</div>
                             <div class="globus">GLOBUS: 11,99 €</div>
@@ -251,6 +211,7 @@
                     <div class="item-card">
                         <img src="images/ausgleichsmasse.webp" alt="Ausgleichsmasse">
                         <strong>Ausgleichsmasse</strong>
+                        <div class="menge-badge">MENGE: 8 Säcke (25kg)</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: Nicht gefunden</div>
                             <div class="globus">GLOBUS: 26,99 €</div>
@@ -268,6 +229,7 @@
                     <div class="item-card">
                         <img src="images/flexkleber.webp" alt="Flexkleber">
                         <strong>Flexkleber</strong>
+                        <div class="menge-badge">MENGE: 10 Säcke (25kg)</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 25,99 €</div>
                             <div class="globus">GLOBUS: 19,99 €</div>
@@ -276,6 +238,7 @@
                     <div class="item-card">
                         <img src="images/fugenmoertel.webp" alt="Fugenmörtel">
                         <strong>Fugenmörtel</strong>
+                        <div class="menge-badge">MENGE: 3 Säcke (5kg)</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 22,99 €</div>
                             <div class="globus">GLOBUS: 27,49 €</div>
@@ -284,6 +247,7 @@
                     <div class="item-card">
                         <img src="images/dichtband.webp" alt="Dichtband">
                         <strong>Dichtband-Set</strong>
+                        <div class="menge-badge">MENGE: 1 Rolle (10m)</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 24,99 €</div>
                             <div class="globus">GLOBUS: 24,99 €</div>
@@ -292,6 +256,7 @@
                     <div class="item-card">
                         <img src="images/silikon.webp" alt="Silikon">
                         <strong>Sanitärsilikon</strong>
+                        <div class="menge-badge">MENGE: 3 Kartuschen</div>
                         <div class="price-compare">
                             <div class="toom">TOOM: 12,99 €</div>
                             <div class="globus">GLOBUS: 12,99 €</div>
@@ -300,6 +265,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Slides 5-8 (Werkzeuge) остаются без изменений, так как там количество = 1 шт. или 1 набор -->
 
         <!-- Slide 5: Werkzeuge 1 -->
         <div class="slide">
@@ -460,23 +427,27 @@
         <!-- Slide 9: Zeitplan -->
         <div class="slide">
             <div class="content-box">
-                <h2>8. BAUABLAUF & TROCKNUNGSZEITEN</h2>
+                <h2>8. BAUABLAUF & ZEITAUFWAND</h2>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <div class="info-block" style="border-left: 10px solid var(--danger-red);">
                         <strong style="font-family: 'Oswald', sans-serif; font-size: 1.4rem;">SCHRITT 1 & 2:</strong> Abbruch alte Fliesen & Tiefengrund auftragen.
-                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Trocknung: 4-24 Std.</span>
+                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right; margin-left: 10px;">Trocknung: 4-24 Std.</span>
+                        <span style="background: var(--warning-yellow); padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Arbeitszeit: ca. 8 Std.</span>
                     </div>
                     <div class="info-block" style="border-left: 10px solid var(--warning-yellow);">
                         <strong style="font-family: 'Oswald', sans-serif; font-size: 1.4rem;">SCHRITT 3 & 4:</strong> Verputzen (Rotband) / Ausgleichsmasse & Dichtband.
-                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Trocknung: 24-48 Std.</span>
+                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right; margin-left: 10px;">Trocknung: 24-48 Std.</span>
+                        <span style="background: var(--warning-yellow); padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Arbeitszeit: ca. 8 Std.</span>
                     </div>
                     <div class="info-block" style="border-left: 10px solid #3498db;">
                         <strong style="font-family: 'Oswald', sans-serif; font-size: 1.4rem;">SCHRITT 5 & 6:</strong> Fliesen kleben & verfugen.
-                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Trocknung: 24 Std.</span>
+                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right; margin-left: 10px;">Trocknung: 24 Std.</span>
+                        <span style="background: var(--warning-yellow); padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Arbeitszeit: ca. 15 Std.</span>
                     </div>
                     <div class="info-block" style="border-left: 10px solid var(--success-green);">
                         <strong style="font-family: 'Oswald', sans-serif; font-size: 1.4rem;">SCHRITT 7:</strong> Silikon ziehen & Duscharmatur montieren.
-                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Trocknung: 24 Std.</span>
+                        <span style="background: #eee; padding: 5px; border: 2px solid #000; font-weight:bold; float:right; margin-left: 10px;">Trocknung: 24 Std.</span>
+                        <span style="background: var(--warning-yellow); padding: 5px; border: 2px solid #000; font-weight:bold; float:right;">Arbeitszeit: ca. 4 Std.</span>
                     </div>
                 </div>
             </div>
@@ -511,10 +482,15 @@
                 <h2>9. PROJEKT-ABSCHLUSS</h2>
 
                 <div class="info-block" style="border: 4px solid #000; margin-bottom: 30px;">
-                    <h3 style="font-size: 2rem; border-bottom: 3px solid #ccc; padding-bottom: 10px;">GESAMTKOSTEN (MATERIAL & WERKZEUG)</h3>
-                    <p>Basierend auf unseren Berechnungen belaufen sich die geschätzten Gesamtkosten für das gesamte 45m² Projekt auf:</p>
-                    <div style="font-size: 4rem; font-family: 'Oswald', sans-serif; font-weight: 700; color: #000; background: var(--warning-yellow); padding: 10px; border: 4px solid #000; display: inline-block; box-shadow: 6px 6px 0px rgba(0,0,0,1); margin-top: 10px;">
-                        ~ 1.330,00 €
+                    <h3 style="font-size: 2rem; border-bottom: 3px solid #ccc; padding-bottom: 10px;">GESAMTAUFWAND (KOSTEN & ZEIT)</h3>
+                    <p>Basierend auf unseren Berechnungen belaufen sich die geschätzten Gesamtkosten und die benötigte Arbeitszeit für das gesamte Projekt auf:</p>
+                    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 15px;">
+                        <div style="font-size: 3rem; font-family: 'Oswald', sans-serif; font-weight: 700; color: #000; background: var(--warning-yellow); padding: 10px 20px; border: 4px solid #000; box-shadow: 6px 6px 0px rgba(0,0,0,1);">
+                            ~ 1.330,00 €
+                        </div>
+                        <div style="font-size: 3rem; font-family: 'Oswald', sans-serif; font-weight: 700; color: #fff; background: var(--steel-dark); padding: 10px 20px; border: 4px solid #000; box-shadow: 6px 6px 0px rgba(0,0,0,1);">
+                            ~ 35 Std. Arbeit
+                        </div>
                     </div>
                 </div>
 
@@ -538,7 +514,6 @@
             progressBar.style.width = progress + '%';
         }
 
-        // Клик - следующий слайд (анимация падения)
         document.body.addEventListener('click', function(e) {
             if (e.target.closest('#backBtn')) return;
 
@@ -552,7 +527,6 @@
             }
         });
 
-        // Кнопка НАЗАД
         function prevSlide(e) {
             e.stopPropagation();
             if (currentSlide > 0) {
