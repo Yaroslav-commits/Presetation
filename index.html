@@ -111,7 +111,6 @@
         .item-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid var(--text-dark); margin-bottom: 10px; background: #eee; }
         .item-card strong { display: block; font-size: 1.2rem; font-family: 'Oswald', sans-serif; text-align: center; margin-bottom: 5px; text-transform: uppercase; }
 
-        /* Новый стиль для количества */
         .menge-badge {
             background: #000; color: var(--warning-yellow); text-align: center;
             font-weight: bold; padding: 5px; margin-bottom: 10px; font-family: 'Oswald', sans-serif;
@@ -131,6 +130,87 @@
         #backBtn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px rgba(0,0,0,1); }
 
         .info-block { background: #fff; border: 3px solid #000; padding: 20px; box-shadow: 6px 6px 0px rgba(0,0,0,0.1); margin-bottom: 15px; }
+
+        /* --------------------------------- */
+        /* 3D SIMULATION CSS (SLIDE 12)      */
+        /* --------------------------------- */
+        .sim-container {
+            width: 100%; height: 350px; perspective: 1200px;
+            display: flex; justify-content: center; align-items: center; margin: 20px 0;
+        }
+        .iso-room {
+            position: relative; width: 220px; height: 220px;
+            transform-style: preserve-3d;
+            transform: rotateX(60deg) rotateZ(-45deg);
+            transition: transform 0.8s ease;
+        }
+        .iso-floor {
+            position: absolute; width: 100%; height: 100%;
+            background-color: #555; border: 2px solid #222;
+            transition: all 0.5s ease;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+        .iso-wall-left {
+            position: absolute; width: 100%; height: 150px;
+            background-color: #666; bottom: 100%; left: 0;
+            transform-origin: bottom; transform: rotateX(-90deg);
+            border: 2px solid #222; border-bottom: none;
+            transition: all 0.5s ease;
+        }
+        .iso-wall-right {
+            position: absolute; width: 150px; height: 100%;
+            background-color: #777; top: 0; left: 100%;
+            transform-origin: left; transform: rotateY(90deg);
+            border: 2px solid #222; border-left: none;
+            transition: all 0.5s ease;
+        }
+
+        /* Step 2: Putz & Ausgleichsmasse */
+        .iso-room.step-2 .iso-floor { background-color: #bdc3c7; box-shadow: none; }
+        .iso-room.step-2 .iso-wall-left, .iso-room.step-2 .iso-wall-right { background-color: #ecf0f1; }
+
+        /* Step 3: Fliesen (Halbhoch an der Wand, voll am Boden) */
+        .iso-room.step-3 .iso-floor, .iso-room.step-4 .iso-floor {
+            background-color: #2c3e50;
+            background-image: linear-gradient(#1a252f 2px, transparent 2px), linear-gradient(90deg, #1a252f 2px, transparent 2px);
+            background-size: 25px 25px;
+        }
+        .iso-room.step-3 .iso-wall-left, .iso-room.step-4 .iso-wall-left {
+            background: linear-gradient(to top, #ecf0f1 100px, #ecf0f1 100px);
+            background-image: linear-gradient(#bdc3c7 2px, transparent 2px), linear-gradient(90deg, #bdc3c7 2px, transparent 2px);
+            background-size: 25px 25px;
+        }
+        .iso-room.step-3 .iso-wall-right, .iso-room.step-4 .iso-wall-right {
+            background-image: linear-gradient(#bdc3c7 2px, transparent 2px), linear-gradient(90deg, #bdc3c7 2px, transparent 2px);
+            background-size: 25px 25px;
+        }
+
+        /* Step 4: Dusche & Armatur */
+        .iso-shower-glass {
+            position: absolute; width: 100px; height: 150px;
+            background: rgba(52, 152, 219, 0.2); border: 2px solid #3498db;
+            bottom: 0; left: 100px;
+            transform-origin: bottom; transform: rotateX(-90deg) translateZ(0px);
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .iso-armatur {
+            position: absolute; width: 15px; height: 60px;
+            background: #f1c40f; /* Gold/Brass Armatur */
+            top: 50px; left: 0;
+            transform-origin: left; transform: rotateY(90deg) translateZ(0px);
+            opacity: 0; transition: opacity 0.5s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .iso-room.step-4 .iso-shower-glass, .iso-room.step-4 .iso-armatur { opacity: 1; }
+
+        .sim-controls { display: flex; gap: 10px; justify-content: center; z-index: 50; flex-wrap: wrap; }
+        .sim-btn {
+            background: #fff; color: #000; border: 3px solid #000;
+            padding: 10px 15px; font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem; cursor: pointer; transition: all 0.1s;
+        }
+        .sim-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #000; }
+        .sim-btn.active { background: var(--warning-yellow); box-shadow: 4px 4px 0px #000; transform: translate(-2px, -2px); }
     </style>
 </head>
 <body>
@@ -143,6 +223,8 @@
     </button>
 
     <div class="slide-container" id="presentation">
+
+        <!-- Slides 1 - 11 remain identical to your previous version -->
 
         <!-- Slide 1: Intro -->
         <div class="slide active">
@@ -265,8 +347,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Slides 5-8 (Werkzeuge) остаются без изменений, так как там количество = 1 шт. или 1 набор -->
 
         <!-- Slide 5: Werkzeuge 1 -->
         <div class="slide">
@@ -502,6 +582,34 @@
             </div>
         </div>
 
+        <!-- Slide 12: 3D-SIMULATION (NEU) -->
+        <div class="slide">
+            <div class="content-box" style="text-align: center;">
+                <h2>10. 3D-SIMULATION (BAUABLAUF)</h2>
+
+                <div class="sim-controls">
+                    <button class="sim-btn active" onclick="setSimStep(1, event)">1. ABBRUCH & ROHBAU</button>
+                    <button class="sim-btn" onclick="setSimStep(2, event)">2. PUTZ & GRUNDIERUNG</button>
+                    <button class="sim-btn" onclick="setSimStep(3, event)">3. FLIESEN LEGEN</button>
+                    <button class="sim-btn" onclick="setSimStep(4, event)">4. DUSCHE & ARMATUR</button>
+                </div>
+
+                <div class="sim-container">
+                    <div class="iso-room step-1" id="simRoom">
+                        <div class="iso-floor"></div>
+                        <div class="iso-wall-left"></div>
+                        <div class="iso-wall-right"></div>
+                        <div class="iso-shower-glass"></div>
+                        <div class="iso-armatur"></div>
+                    </div>
+                </div>
+
+                <p style="font-size: 0.95rem; color: #7f8c8d; font-style: italic; margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                    * Die Idee mit der 3D-Simulation wurde ganz frech von Alex geklaut (Danke für die Erlaubnis, er meinte, für ihn sei die Umsetzung zu schwer, Bro!).
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -514,8 +622,9 @@
             progressBar.style.width = progress + '%';
         }
 
+        // Globaler Klick-Listener (wechselt Slides, ignoriert aber Buttons der Simulation)
         document.body.addEventListener('click', function(e) {
-            if (e.target.closest('#backBtn')) return;
+            if (e.target.closest('#backBtn') || e.target.closest('.sim-btn') || e.target.closest('.sim-controls')) return;
 
             if (currentSlide < slides.length - 1) {
                 slides[currentSlide].classList.remove('active', 'enter-back');
@@ -537,6 +646,19 @@
                 slides[currentSlide].classList.add('active');
                 updateProgress();
             }
+        }
+
+        // Steuerung für die 3D Simulation
+        function setSimStep(step, event) {
+            event.stopPropagation(); // Verhindert das Umblättern der Folie
+
+            // Buttons aktualisieren
+            document.querySelectorAll('.sim-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 3D Raum aktualisieren
+            const room = document.getElementById('simRoom');
+            room.className = `iso-room step-${step}`;
         }
 
         updateProgress();
