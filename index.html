@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Badezimmer Renovierung - Bauprojekt</title>
+    <!-- Подключение Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&display=swap');
 
@@ -131,82 +133,15 @@
 
         .info-block { background: #fff; border: 3px solid #000; padding: 20px; box-shadow: 6px 6px 0px rgba(0,0,0,0.1); margin-bottom: 15px; }
 
-        /* --------------------------------- */
-        /* 3D SIMULATION CSS (SLIDE 12)      */
-        /* --------------------------------- */
+        /* 3D SIMULATION STYLES (NEU) */
         .sim-container {
-            width: 100%; height: 350px; perspective: 1200px;
-            display: flex; justify-content: center; align-items: center; margin: 20px 0;
+            width: 100%; height: 400px; margin: 20px 0; background: #34495e; border: 3px solid #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5); cursor: grab; position: relative;
         }
-        .iso-room {
-            position: relative; width: 220px; height: 220px;
-            transform-style: preserve-3d;
-            transform: rotateX(60deg) rotateZ(-45deg);
-            transition: transform 0.8s ease;
-        }
-        .iso-floor {
-            position: absolute; width: 100%; height: 100%;
-            background-color: #555; border: 2px solid #222;
-            transition: all 0.5s ease;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
-        }
-        .iso-wall-left {
-            position: absolute; width: 100%; height: 150px;
-            background-color: #666; bottom: 100%; left: 0;
-            transform-origin: bottom; transform: rotateX(-90deg);
-            border: 2px solid #222; border-bottom: none;
-            transition: all 0.5s ease;
-        }
-        .iso-wall-right {
-            position: absolute; width: 150px; height: 100%;
-            background-color: #777; top: 0; left: 100%;
-            transform-origin: left; transform: rotateY(90deg);
-            border: 2px solid #222; border-left: none;
-            transition: all 0.5s ease;
-        }
-
-        /* Step 2: Putz & Ausgleichsmasse */
-        .iso-room.step-2 .iso-floor { background-color: #bdc3c7; box-shadow: none; }
-        .iso-room.step-2 .iso-wall-left, .iso-room.step-2 .iso-wall-right { background-color: #ecf0f1; }
-
-        /* Step 3: Fliesen (Halbhoch an der Wand, voll am Boden) */
-        .iso-room.step-3 .iso-floor, .iso-room.step-4 .iso-floor {
-            background-color: #2c3e50;
-            background-image: linear-gradient(#1a252f 2px, transparent 2px), linear-gradient(90deg, #1a252f 2px, transparent 2px);
-            background-size: 25px 25px;
-        }
-        .iso-room.step-3 .iso-wall-left, .iso-room.step-4 .iso-wall-left {
-            background: linear-gradient(to top, #ecf0f1 100px, #ecf0f1 100px);
-            background-image: linear-gradient(#bdc3c7 2px, transparent 2px), linear-gradient(90deg, #bdc3c7 2px, transparent 2px);
-            background-size: 25px 25px;
-        }
-        .iso-room.step-3 .iso-wall-right, .iso-room.step-4 .iso-wall-right {
-            background-image: linear-gradient(#bdc3c7 2px, transparent 2px), linear-gradient(90deg, #bdc3c7 2px, transparent 2px);
-            background-size: 25px 25px;
-        }
-
-        /* Step 4: Dusche & Armatur */
-        .iso-shower-glass {
-            position: absolute; width: 100px; height: 150px;
-            background: rgba(52, 152, 219, 0.2); border: 2px solid #3498db;
-            bottom: 0; left: 100px;
-            transform-origin: bottom; transform: rotateX(-90deg) translateZ(0px);
-            opacity: 0; transition: opacity 0.5s;
-        }
-        .iso-armatur {
-            position: absolute; width: 15px; height: 60px;
-            background: #f1c40f; /* Gold/Brass Armatur */
-            top: 50px; left: 0;
-            transform-origin: left; transform: rotateY(90deg) translateZ(0px);
-            opacity: 0; transition: opacity 0.5s;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-        }
-        .iso-room.step-4 .iso-shower-glass, .iso-room.step-4 .iso-armatur { opacity: 1; }
-
-        .sim-controls { display: flex; gap: 10px; justify-content: center; z-index: 50; flex-wrap: wrap; }
+        .sim-container:active { cursor: grabbing; }
+        .sim-controls { display: flex; gap: 10px; justify-content: center; z-index: 50; flex-wrap: wrap; margin-bottom: 10px; }
         .sim-btn {
-            background: #fff; color: #000; border: 3px solid #000;
-            padding: 10px 15px; font-family: 'Oswald', sans-serif;
+            background: #fff; color: #000; border: 3px solid #000; padding: 10px 15px; font-family: 'Oswald', sans-serif;
             font-size: 1.1rem; cursor: pointer; transition: all 0.1s;
         }
         .sim-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0px #000; }
@@ -223,8 +158,6 @@
     </button>
 
     <div class="slide-container" id="presentation">
-
-        <!-- Slides 1 - 11 remain identical to your previous version -->
 
         <!-- Slide 1: Intro -->
         <div class="slide active">
@@ -582,9 +515,9 @@
             </div>
         </div>
 
-        <!-- Slide 12: 3D-SIMULATION (NEU) -->
+        <!-- Slide 12: Настоящая 3D-SIMULATION с Three.js -->
         <div class="slide">
-            <div class="content-box" style="text-align: center;">
+            <div class="content-box" style="text-align: center; max-width: 1400px; width: 98%;">
                 <h2>10. 3D-SIMULATION (BAUABLAUF)</h2>
 
                 <div class="sim-controls">
@@ -594,18 +527,10 @@
                     <button class="sim-btn" onclick="setSimStep(4, event)">4. DUSCHE & ARMATUR</button>
                 </div>
 
-                <div class="sim-container">
-                    <div class="iso-room step-1" id="simRoom">
-                        <div class="iso-floor"></div>
-                        <div class="iso-wall-left"></div>
-                        <div class="iso-wall-right"></div>
-                        <div class="iso-shower-glass"></div>
-                        <div class="iso-armatur"></div>
-                    </div>
-                </div>
+                <div class="sim-container" id="three-container"></div>
 
-                <p style="font-size: 0.95rem; color: #7f8c8d; font-style: italic; margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                    * Die Idee mit der 3D-Simulation wurde ganz frech von Alex geklaut (Danke für die Erlaubnis, er meinte, für ihn sei die Umsetzung zu schwer, Bro!).
+                <p style="font-size: 0.95rem; color: #7f8c8d; font-style: italic; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                    * Interaktive 3D-Visualisierung (mit der Maus drehbar). Idee inspiriert von Alex (Danke für die Erlaubnis, er meinte, für ihn sei die Umsetzung zu schwer, Bro!).
                 </p>
             </div>
         </div>
@@ -622,9 +547,9 @@
             progressBar.style.width = progress + '%';
         }
 
-        // Globaler Klick-Listener (wechselt Slides, ignoriert aber Buttons der Simulation)
         document.body.addEventListener('click', function(e) {
-            if (e.target.closest('#backBtn') || e.target.closest('.sim-btn') || e.target.closest('.sim-controls')) return;
+            // Игнорировать клики по кнопкам, интерфейсу 3D и самому 3D-холсту
+            if (e.target.closest('#backBtn') || e.target.closest('.sim-btn') || e.target.closest('#three-container')) return;
 
             if (currentSlide < slides.length - 1) {
                 slides[currentSlide].classList.remove('active', 'enter-back');
@@ -633,6 +558,11 @@
                 slides[currentSlide].classList.remove('exit', 'enter-back');
                 slides[currentSlide].classList.add('active');
                 updateProgress();
+
+                // Инициализация Three.js при открытии 12-го слайда
+                if(currentSlide === slides.length - 1 && !simInitialized) {
+                    initThreeJS();
+                }
             }
         });
 
@@ -648,20 +578,165 @@
             }
         }
 
-        // Steuerung für die 3D Simulation
-        function setSimStep(step, event) {
-            event.stopPropagation(); // Verhindert das Umblättern der Folie
+        updateProgress();
 
-            // Buttons aktualisieren
+        // --------------------------------------------------
+        // THREE.JS SIMULATION ЛОГИКА
+        // --------------------------------------------------
+        let simInitialized = false;
+        let simScene, simCamera, simRenderer, simGroup;
+        let wallMaterial, floorMaterial, tileMaterial, glassMaterial, armaturMaterial;
+
+        let currentSimStep = 1;
+        let targetCamPos = new THREE.Vector3(0, 6, 8);
+        let targetCamLook = new THREE.Vector3(0, 0, 0);
+
+        function initThreeJS() {
+            simInitialized = true;
+            const container = document.getElementById('three-container');
+
+            simScene = new THREE.Scene();
+            simCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            simCamera.position.copy(targetCamPos);
+
+            simRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            simRenderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(simRenderer.domElement);
+
+            // Освещение
+            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+            simScene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(5, 10, 5);
+            simScene.add(dirLight);
+
+            simGroup = new THREE.Group();
+            simScene.add(simGroup);
+
+            // Генерация текстуры плитки
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(0,0,128,128); // Светлая плитка
+            ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 4; // Швы
+            ctx.strokeRect(0,0,128,128);
+            const tileTex = new THREE.CanvasTexture(canvas);
+            tileTex.wrapS = THREE.RepeatWrapping; tileTex.wrapT = THREE.RepeatWrapping;
+            tileTex.repeat.set(8, 8); // Повторение текстуры
+
+            // Материалы
+            wallMaterial = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 }); // Изначально бетон
+            floorMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
+            tileMaterial = new THREE.MeshStandardMaterial({ map: tileTex, transparent: true, opacity: 0 }); // Плитка
+            glassMaterial = new THREE.MeshStandardMaterial({ color: 0x85c1e9, transparent: true, opacity: 0, roughness: 0.1 });
+            armaturMaterial = new THREE.MeshStandardMaterial({ color: 0x34495e, metalness: 0.8, roughness: 0.2, transparent: true, opacity: 0 });
+
+            // Пол
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(5, 0.1, 5), floorMaterial);
+            floor.position.set(0, -0.05, 0);
+            simGroup.add(floor);
+            // Плитка на полу
+            const floorTiles = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 5), tileMaterial);
+            floorTiles.position.set(0, -0.04, 0);
+            simGroup.add(floorTiles);
+
+            // Стены (Угловые)
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.1), wallMaterial);
+            wallLeft.position.set(0, 1.5, -2.5);
+            simGroup.add(wallLeft);
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3, 5), wallMaterial);
+            wallRight.position.set(-2.5, 1.5, 0);
+            simGroup.add(wallRight);
+
+            // Плитка на стенах (halbhoch - наполовину)
+            const wallTilesLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 1.5, 0.12), tileMaterial);
+            wallTilesLeft.position.set(0, 0.75, -2.49);
+            simGroup.add(wallTilesLeft);
+            const wallTilesRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 5), tileMaterial);
+            wallTilesRight.position.set(-2.49, 0.75, 0);
+            simGroup.add(wallTilesRight);
+
+            // Душевая кабина (Стекла)
+            const glass1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2.2, 0.05), glassMaterial);
+            glass1.position.set(-1.5, 1.1, -0.5);
+            simGroup.add(glass1);
+            const glass2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.2, 2), glassMaterial);
+            glass2.position.set(-0.5, 1.1, -1.5);
+            simGroup.add(glass2);
+
+            // Душевая арматура (Стойка)
+            const armatur = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5), armaturMaterial);
+            armatur.position.set(-2.4, 1.2, -2.4);
+            simGroup.add(armatur);
+            const showerHead = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05), armaturMaterial);
+            showerHead.position.set(-2.2, 1.9, -2.2);
+            showerHead.rotation.x = Math.PI / 4;
+            showerHead.rotation.z = -Math.PI / 4;
+            simGroup.add(showerHead);
+
+            // Вращение мышью
+            let isDragging = false, prevMouse = { x: 0, y: 0 };
+            container.addEventListener('pointerdown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+            window.addEventListener('pointerup', () => isDragging = false);
+            window.addEventListener('pointermove', e => {
+                if(isDragging) {
+                    simGroup.rotation.y += (e.clientX - prevMouse.x) * 0.01;
+                    simGroup.rotation.x += (e.clientY - prevMouse.y) * 0.01;
+                    simGroup.rotation.x = Math.max(-Math.PI/6, Math.min(Math.PI/4, simGroup.rotation.x));
+                    prevMouse = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                simCamera.aspect = container.clientWidth / container.clientHeight;
+                simCamera.updateProjectionMatrix();
+                simRenderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            animateSim();
+        }
+
+        // Анимационный цикл для плавных переходов
+        function animateSim() {
+            requestAnimationFrame(animateSim);
+
+            // Плавное движение камеры (Zoom)
+            simCamera.position.lerp(targetCamPos, 0.05);
+            simCamera.lookAt(targetCamLook);
+
+            // Плавное изменение цвета бетона на штукатурку/грунтовку (Шаг 2)
+            const targetWallColor = currentSimStep >= 2 ? new THREE.Color(0xbdc3c7) : new THREE.Color(0x555555);
+            wallMaterial.color.lerp(targetWallColor, 0.05);
+            const targetFloorColor = currentSimStep >= 2 ? new THREE.Color(0x95a5a6) : new THREE.Color(0x444444);
+            floorMaterial.color.lerp(targetFloorColor, 0.05);
+
+            // Плавное появление плитки (Шаг 3)
+            const tOpacity = currentSimStep >= 3 ? 1 : 0;
+            tileMaterial.opacity += (tOpacity - tileMaterial.opacity) * 0.05;
+
+            // Плавное появление душевой (Шаг 4)
+            const gOpacity = currentSimStep >= 4 ? 0.5 : 0;
+            glassMaterial.opacity += (gOpacity - glassMaterial.opacity) * 0.05;
+            const aOpacity = currentSimStep >= 4 ? 1 : 0;
+            armaturMaterial.opacity += (aOpacity - armaturMaterial.opacity) * 0.05;
+
+            simRenderer.render(simScene, simCamera);
+        }
+
+        // Управление шагами симуляции
+        window.setSimStep = function(step, event) {
+            event.stopPropagation();
+            currentSimStep = step;
+
             document.querySelectorAll('.sim-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
 
-            // 3D Raum aktualisieren
-            const room = document.getElementById('simRoom');
-            room.className = `iso-room step-${step}`;
-        }
-
-        updateProgress();
+            // Настройка камеры для каждого этапа
+            if(step === 1) { targetCamPos.set(0, 6, 8); targetCamLook.set(0, 0, 0); }
+            else if(step === 2) { targetCamPos.set(-1, 5, 7); targetCamLook.set(-1, 0, -1); }
+            else if(step === 3) { targetCamPos.set(-2, 4, 5); targetCamLook.set(-1, 1, -1); }
+            else if(step === 4) { targetCamPos.set(-3, 3, 3); targetCamLook.set(-2, 1, -2); }
+        };
     </script>
 </body>
 </html>
