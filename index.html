@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Badezimmer Renovierung - Bauprojekt</title>
-    <!-- Подключение Three.js -->
+    <!-- Three.js (3D-Simulation, wird aus dem Internet geladen) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&display=swap');
@@ -133,32 +133,87 @@
 
         .info-block { background: #fff; border: 3px solid #000; padding: 20px; box-shadow: 6px 6px 0px rgba(0,0,0,0.1); margin-bottom: 15px; }
 
-        /* 3D SIMULATION STYLES */
-        .sim-container {
-            width: 100%; height: 450px; margin: 15px 0; background: #2c3e50; border: 3px solid #000;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8); cursor: grab; position: relative;
-        }
-        .sim-container:active { cursor: grabbing; }
+        /* 3D SIMULATION – Vollbild mit HUD */
+        .slide.sim-slide { padding: 0; }
+        .sim-slide .sim-container { position: absolute; inset: 0; background: #1b2128; cursor: grab; overflow: hidden; }
+        .sim-slide .sim-container:active { cursor: grabbing; }
+        .sim-slide canvas { display: block; }
+        #simLabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+        .sim-lbl { position: absolute; left: 0; top: 0; display: none; white-space: nowrap; font: 600 11px 'Roboto', sans-serif; color: #111;
+            background: rgba(255,215,0,.93); padding: 2px 7px; border: 1.5px solid #000; box-shadow: 2px 2px 0 rgba(0,0,0,.55); margin-top: -4px; }
+        .sim-lbl.mat { background: rgba(255,255,255,.95); padding: 4px 8px; line-height: 1.25; border-left: 5px solid #ffd700; }
+        .sim-lbl.mat b, .sim-lbl.mat span, .sim-lbl.mat em { display: block; }
+        .sim-lbl.mat b { font: 700 12px 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: .3px; }
+        .sim-lbl.mat span { font-weight: 500; color: #333; }
+        .sim-lbl.mat em { font-style: normal; color: #1e8449; font-weight: 700; }
+        #simLabels.compact .sim-lbl.mat span, #simLabels.compact .sim-lbl.mat em { display: none; }
+        #simLabels.compact .sim-lbl { font-size: 10px; padding: 1px 5px; }
+        .sim-slide.inv .sim-head { display: none; }
+        .sim-lbl.cat { background: #000; color: #ffd700; font: 700 13px 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; border-color: #ffd700; }
+        .sim-lbl.dim { background: #111; color: #ffd700; font-size: 13px; padding: 4px 9px; border-color: #ffd700; }
+        .sim-lbl.dim.red { color: #ff7b6b; border-color: #ff7b6b; }
+        .sim-lbl.dim.blue { color: #8fd0ff; border-color: #8fd0ff; }
+        .sim-lbl.ok { background: #27ae60; color: #fff; font-size: 13px; }
+        .sim-lbl.warn { background: #c0392b; color: #fff; }
 
-        .sim-overlay-text {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: var(--warning-yellow); border: 2px solid var(--warning-yellow);
-            padding: 10px 20px; font-family: 'Oswald', sans-serif; font-size: 1.5rem; letter-spacing: 1px;
-            z-index: 50; pointer-events: none; text-align: center; width: 80%;
-        }
-
-        .tap-hint {
-            position: absolute; bottom: 15px; right: 20px; font-family: 'Oswald', sans-serif;
-            color: #fff; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px;
-            pointer-events: none; z-index: 50;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; color: var(--warning-yellow); }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
+        .sim-ui { position: absolute; z-index: 20; color: #fff; font-family: 'Roboto', sans-serif; }
+        .sim-panel { background: rgba(12,16,20,.82); border: 2px solid #000; box-shadow: 5px 5px 0 rgba(0,0,0,.6); backdrop-filter: blur(3px); }
+        .sim-kicker { font: 700 11px 'Oswald', sans-serif; letter-spacing: 1.5px; color: #ffd700; text-transform: uppercase; }
+        .sim-head { left: 98px; top: 24px; max-width: min(470px, 40vw); padding: 14px 18px 14px; border-left: 8px solid #ffd700; }
+        .sim-step { font: 700 15px 'Oswald', sans-serif; letter-spacing: 1px; color: #000; background: #ffd700; display: inline-block; padding: 2px 10px; margin: 6px 0 4px; border: 2px solid #000; }
+        .sim-title { font: 700 clamp(20px, 2.1vw, 30px) 'Oswald', sans-serif; text-transform: uppercase; line-height: 1.1; }
+        .sim-sub { margin-top: 8px; font-weight: 700; font-size: 14px; color: #ffe566; min-height: 18px; }
+        .sim-desc { margin-top: 6px; font-size: 13px; line-height: 1.45; color: #d6dde3; }
+        .sim-block { margin-top: 8px; font-size: 12px; color: #9fb3c2; border-top: 1px dashed rgba(255,255,255,.25); padding-top: 6px; }
+        .sim-right { right: 18px; top: 24px; bottom: 122px; width: min(300px, 27vw); display: flex; flex-direction: column; gap: 10px; }
+        .sim-time { padding: 12px 16px; border-top: 6px solid #ffd700; }
+        .sim-hours { font: 700 34px 'Oswald', sans-serif; line-height: 1.1; margin-top: 2px; }
+        .sim-hours small { font-size: 16px; color: #ffd700; }
+        .sim-hbar { height: 8px; background: #2b333b; border: 1px solid #000; margin: 6px 0; }
+        .sim-hbar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(45deg,#ffd700,#ffd700 8px,#000 8px,#000 16px); transition: width .2s; }
+        .sim-hbar.dry i { background: #7fa6ff; }
+        .sim-note { font-size: 11.5px; color: #b9c4cc; line-height: 1.4; }
+        .sim-dry { display: none; margin-top: 10px; padding: 8px 10px; border: 2px solid #7fa6ff; background: rgba(40,60,120,.45); font-size: 12.5px; line-height: 1.35; }
+        .sim-dry .sim-kicker { color: #a9c4ff; }
+        .sim-dryval b { font: 700 18px 'Oswald', sans-serif; color: #fff; }
+        .sim-dryval small { color: #b9c4cc; font-size: 10.5px; }
+        .sim-side { position: static; flex: 1; overflow-y: auto; padding: 10px 14px 12px; font-size: 12.5px; }
+        .sim-side::-webkit-scrollbar { width: 8px; } .sim-side::-webkit-scrollbar-thumb { background: #ffd700; }
+        .sim-side h4 { font: 700 12px 'Oswald', sans-serif; letter-spacing: 1px; color: #ffd700; text-transform: uppercase; margin: 8px 0 6px; }
+        .sim-side .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+        .sim-side .chips span { background: #2b333b; border: 1px solid #4a545d; padding: 2px 6px; font-size: 11.5px; transition: all .2s; }
+        .sim-side .chips span.act { background: #ffd700; color: #000; border-color: #000; font-weight: 700; }
+        .sim-side .mrow { border-left: 4px solid #ffd700; background: rgba(255,255,255,.06); padding: 5px 8px; margin-bottom: 5px; line-height: 1.3; }
+        .sim-side .mrow b { display: block; font-size: 12.5px; }
+        .sim-side .mrow span { display: block; color: #c9d2d9; font-size: 11.5px; }
+        .sim-side .mrow em { display: block; font-style: normal; color: #6fe39b; font-weight: 700; font-size: 12px; }
+        .sim-side .mrow.tot { border-left-color: #27ae60; background: rgba(39,174,96,.18); }
+        .sim-side .big { font: 700 36px 'Oswald', sans-serif; color: #ffd700; line-height: 1.1; }
+        .sim-side .note { color: #b9c4cc; font-size: 11.5px; margin: 6px 0 8px; line-height: 1.4; }
+        .sim-invhead { display: none; left: 50%; top: 24px; transform: translateX(-50%); background: #000; color: #ffd700; border: 2px solid #ffd700; padding: 8px 18px; font: 700 18px 'Oswald', sans-serif; letter-spacing: 1px; text-align: center; }
+        .sim-invhead small { display: block; color: #ccc; font: 500 11px 'Roboto', sans-serif; letter-spacing: 0; }
+        .sim-bottom { left: 18px; right: 18px; bottom: 14px; }
+        .sim-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .sim-ctrl button { font: 700 13px 'Oswald', sans-serif; letter-spacing: .5px; background: rgba(12,16,20,.85); color: #fff; border: 2px solid #000; box-shadow: 3px 3px 0 #000; padding: 6px 11px; cursor: pointer; }
+        .sim-ctrl button:hover { background: #2c3e50; }
+        .sim-ctrl button.on { background: #ffd700; color: #000; }
+        .sim-ctrl button.primary { background: #ffd700; color: #000; }
+        .sim-ctrl button.pulse { animation: simPulse 1.2s infinite; }
+        @keyframes simPulse { 50% { box-shadow: 0 0 0 4px rgba(255,215,0,.45), 3px 3px 0 #000; } }
+        .sim-hint { font-size: 11.5px; color: #c7d0d7; margin-left: 6px; text-shadow: 0 1px 2px #000; transition: opacity .3s; }
+        .sim-timeline { display: flex; gap: 3px; height: 38px; background: rgba(0,0,0,.55); border: 2px solid #000; padding: 3px; }
+        .tl-seg { display: flex; gap: 2px; cursor: pointer; min-width: 0; outline: 2px solid transparent; }
+        .tl-seg.on { outline-color: #ffd700; }
+        .tl-work, .tl-wait { position: relative; background: #2b333b; overflow: hidden; min-width: 0; }
+        .tl-wait { background: repeating-linear-gradient(45deg,#1f2a44,#1f2a44 5px,#2a3a60 5px,#2a3a60 10px); }
+        .tl-work i, .tl-wait i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #ffd700; }
+        .tl-wait i { background: #7fa6ff; }
+        .tl-work span, .tl-wait span { position: relative; z-index: 1; display: block; font: 700 12px 'Oswald', sans-serif; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000, 1px 1px 0 #000; padding: 9px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+        .sim-credit { position: absolute; right: 20px; bottom: 2px; z-index: 20; font-size: 10px; color: #8796a3; font-style: italic; pointer-events: none; }
+        .sim-error { display: none; position: absolute; inset: 0; z-index: 30; align-items: center; justify-content: center; text-align: center; color: #fff; font: 600 20px 'Oswald', sans-serif; background: #1b2128; }
+        .sim-error small, .sim-error span { font: 400 14px 'Roboto', sans-serif; color: #c7d0d7; }
+        .sim-slide.night .sim-container { box-shadow: inset 0 0 160px rgba(10,20,60,.55); }
+        @media (max-width: 900px) { .sim-head { max-width: 52vw; } .sim-desc { display: none; } .sim-hint { display: none; } .sim-right { width: 40vw; } }
     </style>
 </head>
 <body>
@@ -528,326 +583,1267 @@
             </div>
         </div>
 
-        <!-- Slide 12: Настоящая 3D-SIMULATION с Three.js (БЕЗ КНОПОК, ПО КЛИКУ) -->
-        <div class="slide">
-            <div class="content-box" style="text-align: center; max-width: 1400px; width: 98%;">
-                <h2>10. 3D-SIMULATION (BAUABLAUF)</h2>
-
-                <div class="sim-container" id="three-container">
-                    <div id="sim-status" class="sim-overlay-text">0. STARTPOSITION (TAP TO BEGIN)</div>
-                    <div class="tap-hint">TAP TO ADVANCE 👆</div>
-                </div>
-
-                <p style="font-size: 0.95rem; color: #7f8c8d; font-style: italic; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                    * Interaktive 3D-Visualisierung (mit der Maus drehbar). Idee inspiriert von Alex.
-                </p>
+        <!-- Slide 12: 3D-SIMULATION (Vollbild) – Ablauf, Zeit, Werkzeuge & Material nach Vortragsskript -->
+        <div class="slide sim-slide">
+            <div class="sim-container" id="three-container">
+                <div id="simLabels"></div>
             </div>
+
+            <div class="sim-ui sim-panel sim-head">
+                <div class="sim-kicker">10. 3D-Simulation · Bauablauf</div>
+                <div id="simStep" class="sim-step">AUSGANGSLAGE</div>
+                <div id="simTitle" class="sim-title">Ausgangslage</div>
+                <div id="simSub" class="sim-sub"></div>
+                <div id="simDesc" class="sim-desc"></div>
+                <div id="simBlock" class="sim-block"></div>
+            </div>
+
+            <div class="sim-ui sim-right">
+                <div class="sim-panel sim-time">
+                    <div class="sim-kicker">Aktive Arbeitszeit (1 Person)</div>
+                    <div class="sim-hours"><span id="simHours">0 – 0</span> <small>Std.</small></div>
+                    <div class="sim-hbar"><i id="simHoursBar"></i></div>
+                    <div class="sim-note">Gesamt laut Plan: 59 – 98 Std.</div>
+                    <div id="simDry" class="sim-dry">
+                        <div class="sim-kicker">☾ Trocknung / Wartezeit</div>
+                        <div id="simDryTxt"></div>
+                        <div class="sim-dryval"><b id="simDryVal"></b><br><small>Richtwert lt. Verpackung (Folie „Bauablauf“)</small></div>
+                        <div class="sim-hbar dry"><i id="simDryBar"></i></div>
+                    </div>
+                </div>
+                <div id="simSide" class="sim-panel sim-side"></div>
+            </div>
+
+            <div id="simInvHead" class="sim-ui sim-invhead">INVENTAR · Werkzeuge (Blatt 2) &amp; Baustoffe (Blatt 3)<small>Ziehen = drehen · Mausrad = Zoom · Taste I = zurück zum Bad</small></div>
+
+            <div class="sim-ui sim-bottom">
+                <div class="sim-ctrl">
+                    <button id="simPrevBtn" title="Schritt zurück (←)">◀</button>
+                    <button id="simNext" class="primary" title="Nächster Schritt (Leertaste / →)">Weiter ▶</button>
+                    <button id="simViewBtn" title="Taste V">Ansicht: Innen</button>
+                    <button id="simInvBtn" title="Taste I">Inventar 3D</button>
+                    <button id="simLblBtn" class="on" title="Taste L">Beschriftung</button>
+                    <button id="simAutoBtn" title="Taste A: Schritte laufen automatisch weiter">Auto</button>
+                    <button id="simFsBtn" title="Taste F">Vollbild</button>
+                    <button id="simRestart" title="Taste R: von vorne">↺</button>
+                    <span id="simHint" class="sim-hint">Klick / Leertaste: weiter · ←: zurück · Ziehen: umsehen · Mausrad: Zoom · Doppelklick: Blick zurücksetzen</span>
+                </div>
+                <div id="simTimeline" class="sim-timeline"></div>
+            </div>
+
+            <div class="sim-credit">Interaktive 3D-Visualisierung · Idee inspiriert von Alex</div>
+            <div id="simError" class="sim-error"><div>3D-Simulation konnte nicht geladen werden.<br><small>Three.js wird aus dem Internet geladen – bitte Internetverbindung prüfen.</small><br><span></span></div></div>
         </div>
 
     </div>
 
     <script>
+        /* ---------- Folien-Navigation ---------- */
         const slides = document.querySelectorAll('.slide');
         let currentSlide = 0;
         const progressBar = document.getElementById('progressBar');
-
-        const simStepTexts = [
-            "0. STARTPOSITION (TAP TO BEGIN)",
-            "1. ABBRUCH & ROHBAU (WERKZEUG AKTIV)",
-            "2. PUTZ & GRUNDIERUNG",
-            "3. FLIESEN LEGEN",
-            "4. DUSCHE & ARMATUR (ENDE)"
-        ];
+        const SIM_SLIDE = slides.length - 1;
 
         function updateProgress() {
             const progress = ((currentSlide + 1) / slides.length) * 100;
             progressBar.style.width = progress + '%';
         }
-
-        document.body.addEventListener('click', function(e) {
-            if (e.target.closest('#backBtn')) return;
-
-            // Логика для 12-го слайда (3D Симуляция)
-            if (currentSlide === slides.length - 1) {
-                if (currentSimStep < 4) {
-                    currentSimStep++;
-                    document.getElementById('sim-status').innerText = simStepTexts[currentSimStep];
-                    updateSimCameraAndLogic(currentSimStep);
-                }
-                return;
-            }
-
-            // Обычное перелистывание слайдов (Слайды 1-11)
-            if (currentSlide < slides.length - 1) {
-                slides[currentSlide].classList.remove('active', 'enter-back');
-                slides[currentSlide].classList.add('exit');
-                currentSlide++;
-                slides[currentSlide].classList.remove('exit', 'enter-back');
-                slides[currentSlide].classList.add('active');
-                updateProgress();
-
-                if (currentSlide === slides.length - 1 && !simInitialized) {
-                    initThreeJS();
-                }
-            }
-        });
-
-        function prevSlide(e) {
-            e.stopPropagation();
-            if (currentSlide > 0) {
-                slides[currentSlide].classList.remove('active', 'exit');
-                slides[currentSlide].classList.add('enter-back');
-                currentSlide--;
-                slides[currentSlide].classList.remove('exit', 'enter-back');
-                slides[currentSlide].classList.add('active');
-                updateProgress();
-            }
+        function showSlide(i, back) {
+            slides[currentSlide].classList.remove('active', 'enter-back', 'exit');
+            slides[currentSlide].classList.add(back ? 'enter-back' : 'exit');
+            currentSlide = i;
+            slides[currentSlide].classList.remove('exit', 'enter-back');
+            slides[currentSlide].classList.add('active');
+            updateProgress();
+            if (window.Sim) { if (currentSlide === SIM_SLIDE) Sim.enter(); else Sim.leave(); }
         }
-
+        function goNext() {
+            if (currentSlide === SIM_SLIDE && window.Sim && Sim.ready) { Sim.next(); return; }
+            if (currentSlide < slides.length - 1) showSlide(currentSlide + 1, false);
+        }
+        function goPrev() {
+            if (currentSlide === SIM_SLIDE && window.Sim && Sim.ready && Sim.phase > 0) { Sim.prev(); return; }
+            if (currentSlide > 0) showSlide(currentSlide - 1, true);
+        }
+        document.body.addEventListener('click', function (e) {
+            if (e.target.closest('#backBtn') || e.target.closest('.sim-ui')) return;
+            if (currentSlide === SIM_SLIDE && window.Sim && Sim.consumeDrag()) return;
+            goNext();
+        });
+        function prevSlide(e) { e.stopPropagation(); goPrev(); }
+        document.addEventListener('keydown', function (e) {
+            const k = e.key;
+            if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); goNext(); }
+            else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); goPrev(); }
+            else if (currentSlide === SIM_SLIDE && window.Sim && Sim.ready) Sim.key(k.toLowerCase());
+        });
         updateProgress();
 
-        // --------------------------------------------------
-        // THREE.JS SIMULATION ЛОГИКА (ОПТИМИЗИРОВАННО + АНИМАЦИЯ)
-        // --------------------------------------------------
-        let simInitialized = false;
-        let simScene, simCamera, simRenderer, simGroup;
-        let wallMaterial, floorMaterial, oldTileMaterial, newTileMaterial, glassMaterial, armaturMaterial;
-        let hammerGroup, drillGroup;
-
-        let currentSimStep = 0;
-        let targetCamPos = new THREE.Vector3(0, 6, 8);
-        let currentCamLook = new THREE.Vector3(0, 0, 0);
-        let targetCamLook = new THREE.Vector3(0, 0, 0);
-
-        function initThreeJS() {
-            simInitialized = true;
-            const container = document.getElementById('three-container');
-
-            simScene = new THREE.Scene();
-            simCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            simCamera.position.copy(targetCamPos);
-
-            simRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-            simRenderer.setPixelRatio(window.devicePixelRatio > 1 ? 1.5 : 1);
-            simRenderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(simRenderer.domElement);
-
-            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
-            simScene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            dirLight.position.set(5, 10, 5);
-            simScene.add(dirLight);
-
-            simGroup = new THREE.Group();
-            simScene.add(simGroup);
-
-            // Текстура старой плитки
-            const oldCanvas = document.createElement('canvas');
-            oldCanvas.width = 64; oldCanvas.height = 64;
-            const ctxOld = oldCanvas.getContext('2d');
-            ctxOld.fillStyle = '#7f8c8d'; ctxOld.fillRect(0,0,64,64);
-            ctxOld.strokeStyle = '#2c3e50'; ctxOld.lineWidth = 2; ctxOld.strokeRect(0,0,64,64);
-            const oldTileTex = new THREE.CanvasTexture(oldCanvas);
-            oldTileTex.wrapS = THREE.RepeatWrapping; oldTileTex.wrapT = THREE.RepeatWrapping;
-            oldTileTex.repeat.set(8, 8);
-
-            // Текстура новой плитки
-            const newCanvas = document.createElement('canvas');
-            newCanvas.width = 64; newCanvas.height = 64;
-            const ctxNew = newCanvas.getContext('2d');
-            ctxNew.fillStyle = '#ecf0f1'; ctxNew.fillRect(0,0,64,64);
-            ctxNew.strokeStyle = '#bdc3c7'; ctxNew.lineWidth = 4; ctxNew.strokeRect(0,0,64,64);
-            const newTileTex = new THREE.CanvasTexture(newCanvas);
-            newTileTex.wrapS = THREE.RepeatWrapping; newTileTex.wrapT = THREE.RepeatWrapping;
-            newTileTex.repeat.set(8, 8);
-
-            // Материалы
-            wallMaterial = new THREE.MeshLambertMaterial({ color: 0x555555 }); // Изначально темный бетон
-            floorMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
-            oldTileMaterial = new THREE.MeshLambertMaterial({ map: oldTileTex, transparent: true, opacity: 1 });
-            newTileMaterial = new THREE.MeshLambertMaterial({ map: newTileTex, transparent: true, opacity: 0 });
-            glassMaterial = new THREE.MeshLambertMaterial({ color: 0x85c1e9, transparent: true, opacity: 0 });
-            armaturMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc, transparent: true, opacity: 0 });
-
-            // Пол
-            const floor = new THREE.Mesh(new THREE.BoxGeometry(5, 0.1, 5), floorMaterial);
-            floor.position.set(0, -0.05, 0);
-            simGroup.add(floor);
-
-            // Плитка на полу (старая и новая в одном месте, меняем прозрачность)
-            const oldFloorTiles = new THREE.Mesh(new THREE.BoxGeometry(5, 0.11, 5), oldTileMaterial);
-            oldFloorTiles.position.set(0, -0.045, 0);
-            simGroup.add(oldFloorTiles);
-
-            const newFloorTiles = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 5), newTileMaterial);
-            newFloorTiles.position.set(0, -0.04, 0);
-            simGroup.add(newFloorTiles);
-
-            // Стены
-            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.1), wallMaterial);
-            wallLeft.position.set(0, 1.5, -2.5);
-            simGroup.add(wallLeft);
-
-            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3, 5), wallMaterial);
-            wallRight.position.set(-2.5, 1.5, 0);
-            simGroup.add(wallRight);
-
-            // Плитка на стенах (старая и новая)
-            const oldWallTilesLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 1.5, 0.11), oldTileMaterial);
-            oldWallTilesLeft.position.set(0, 0.75, -2.495);
-            simGroup.add(oldWallTilesLeft);
-
-            const newWallTilesLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 1.5, 0.12), newTileMaterial);
-            newWallTilesLeft.position.set(0, 0.75, -2.49);
-            simGroup.add(newWallTilesLeft);
-
-            const oldWallTilesRight = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.5, 5), oldTileMaterial);
-            oldWallTilesRight.position.set(-2.495, 0.75, 0);
-            simGroup.add(oldWallTilesRight);
-
-            const newWallTilesRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 5), newTileMaterial);
-            newWallTilesRight.position.set(-2.49, 0.75, 0);
-            simGroup.add(newWallTilesRight);
-
-            // Душевая кабина
-            const glass1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2.2, 0.05), glassMaterial);
-            glass1.position.set(-1.5, 1.1, -0.5);
-            simGroup.add(glass1);
-
-            const glass2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.2, 2), glassMaterial);
-            glass2.position.set(-0.5, 1.1, -1.5);
-            simGroup.add(glass2);
-
-            const armatur = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5), armaturMaterial);
-            armatur.position.set(-2.4, 1.2, -2.4);
-            simGroup.add(armatur);
-
-            const showerHead = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05), armaturMaterial);
-            showerHead.position.set(-2.2, 1.9, -2.2);
-            showerHead.rotation.x = Math.PI / 4;
-            showerHead.rotation.z = -Math.PI / 4;
-            simGroup.add(showerHead);
-
-            // --- ИНСТРУМЕНТЫ ---
-
-            // Молоток
-            hammerGroup = new THREE.Group();
-            const hammerHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.6), new THREE.MeshLambertMaterial({color: 0x8b5a2b}));
-            const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.15), new THREE.MeshLambertMaterial({color: 0x333333}));
-            hammerHead.position.y = 0.3;
-            hammerGroup.add(hammerHandle, hammerHead);
-            hammerGroup.position.set(1.5, 1.5, -2.0);
-            hammerGroup.visible = false;
-            simGroup.add(hammerGroup);
-
-            // Бормашина (Перфоратор)
-            drillGroup = new THREE.Group();
-            const drillBody = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.15), new THREE.MeshLambertMaterial({color: 0x27ae60}));
-            const drillGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), new THREE.MeshLambertMaterial({color: 0x111111}));
-            drillGrip.position.set(-0.15, -0.2, 0);
-            const drillBit = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4), new THREE.MeshLambertMaterial({color: 0xaaaaaa}));
-            drillBit.rotation.z = Math.PI / 2;
-            drillBit.position.set(0.4, 0, 0);
-            drillGroup.add(drillBody, drillGrip, drillBit);
-            drillGroup.rotation.y = Math.PI;
-            drillGroup.position.set(-1.8, 1.5, 1.0);
-            drillGroup.visible = false;
-            simGroup.add(drillGroup);
-
-            // Управление мышью (крутим сцену)
-            let isDragging = false, prevMouse = { x: 0, y: 0 };
-            container.addEventListener('pointerdown', e => {
-                isDragging = true;
-                prevMouse = { x: e.clientX, y: e.clientY };
-                e.stopPropagation();
-            });
-            window.addEventListener('pointerup', () => isDragging = false);
-            window.addEventListener('pointermove', e => {
-                if(isDragging) {
-                    simGroup.rotation.y += (e.clientX - prevMouse.x) * 0.01;
-                    simGroup.rotation.x += (e.clientY - prevMouse.y) * 0.01;
-                    simGroup.rotation.x = Math.max(-Math.PI/6, Math.min(Math.PI/4, simGroup.rotation.x));
-                    prevMouse = { x: e.clientX, y: e.clientY };
-                }
-            });
-
-            window.addEventListener('resize', () => {
-                if(container.clientWidth > 0) {
-                    simCamera.aspect = container.clientWidth / container.clientHeight;
-                    simCamera.updateProjectionMatrix();
-                    simRenderer.setSize(container.clientWidth, container.clientHeight);
-                }
-            });
-
-            animateSim();
+        /* ---------- 3D-Simulation ---------- */
+        (function () {
+        'use strict';
+        if (typeof THREE === 'undefined') {
+            window.Sim = { enter() { document.getElementById('simError').style.display = 'flex'; }, leave() { }, next() { }, prev() { }, key() { }, phase: 0, ready: false, consumeDrag() { return false; } };
+            return;
         }
+/* =========================================================
+   3D-SIMULATION BADEZIMMER – Daten exakt nach Vortragsskript
+   (Blatt 1: Flächen · Blatt 2: Werkzeuge · Blatt 3/4: Material & Preise
+    Blatt 6: Arbeitszeiten · Blatt 7: 9 Ablaufschritte)
+   ========================================================= */
+const V3 = THREE.Vector3;
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const ease = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const fmt = n => String(Math.round(n));
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(1739);
 
-        // Обновление логики и положения камеры
-        function updateSimCameraAndLogic(step) {
-            if(step === 1) {
-                targetCamPos.set(0, 5, 7); targetCamLook.set(0, 1, 0);
-                hammerGroup.visible = true;
-                drillGroup.visible = true;
-            }
-            else if(step === 2) {
-                targetCamPos.set(-1, 5, 6); targetCamLook.set(-1, 0.5, -1);
-                hammerGroup.visible = false;
-                drillGroup.visible = false;
-            }
-            else if(step === 3) {
-                targetCamPos.set(-2, 4, 5); targetCamLook.set(-1, 1, -1);
-            }
-            else if(step === 4) {
-                targetCamPos.set(-3, 3, 3); targetCamLook.set(-1.5, 1, -1.5);
-            }
+/* ---------- Raum (Maße laut Auftrag) ---------- */
+const RW = 4.2, RD = 3.2, RH = 2.5, TH = 1.3;          // 4,2 × 3,2 ≈ 13,4 m² Boden · Fliesen halbhoch 1,30 m
+const X0 = -RW / 2, X1 = RW / 2, Z0 = -RD / 2, Z1 = RD / 2;
+const DOOR = { s0: 0.35, s1: 1.25, h: 2.0 };             // Tür 0,90 × 2,00 m (Vorderwand)
+const SHOWER = { x0: X0, x1: X0 + 1.1, z0: Z0, z1: Z0 + 1.1 };
+const DRAIN = new V3(-1.55, 0, -1.05);
+const PIPE_S = [0.475, 0.625], PIPE_Y = 1.05;           // Anschlüsse Duscharmatur (Rückwand)
+const WALLS = [
+  { name: 'back',  o: new V3(X0, 0, Z0), u: new V3(1, 0, 0),  n: new V3(0, 0, 1),  L: RW },
+  { name: 'right', o: new V3(X1, 0, Z0), u: new V3(0, 0, 1),  n: new V3(-1, 0, 0), L: RD },
+  { name: 'front', o: new V3(X1, 0, Z1), u: new V3(-1, 0, 0), n: new V3(0, 0, -1), L: RW, door: true },
+  { name: 'left',  o: new V3(X0, 0, Z1), u: new V3(0, 0, -1), n: new V3(1, 0, 0),  L: RD }
+];
+WALLS.forEach(w => { w.ry = Math.atan2(w.n.x, w.n.z); w.iv = w.door ? [[0, DOOR.s0], [DOOR.s1, w.L]] : [[0, w.L]]; });
+function wp(w, s, y, d) { return w.o.clone().addScaledVector(w.u, s).addScaledVector(w.n, d).setY(y); }
+
+/* ---------- Ablauf: 9 Schritte (Blatt 7) + Zeiten (Blatt 6) ---------- */
+const DRY_SRC = 'Richtwert lt. Verpackung (Folie „Bauablauf“)';
+const PHASES = [
+  { step: 0, short: 'Start', title: 'Ausgangslage', dur: 0, work: [0, 0],
+    desc: 'Älteres Bad: Fliesen lösen sich von der Wand, der Boden muss erneuert werden. Ziel: Wand halbhoch (1,30 m) und Boden neu fliesen, neue Duscharmatur.',
+    cam: [1.65, 1.65, 1.3, -1.2, 0.75, -1.2] },
+  { step: 1, short: '1', title: 'Ausmessen & Vorbereiten', dur: 10, work: [4, 6], block: 'Arbeitsbereich vorbereiten & schützen: 4–6 Std.',
+    desc: 'Wand 25,00 m × 1,30 m = 32,50 m² − Tür 0,90 × 1,30 m = 1,17 m² → 31,33 m². Boden 13,40 m² → 44,73 m² + 10 % Verschnitt = 49,20 m² (≈ 35 m² Wand + 15 m² Boden).',
+    cam: [1.45, 1.75, 1.3, -0.7, 0.9, -1.3] },
+  { step: 2, short: '2', title: 'Alte Fliesen entfernen', dur: 13, work: [12, 18], block: 'Wand- & Bodenfliesen entfernen: 12–18 Std.',
+    desc: 'Alte Wand- und Bodenfliesen werden herausgestemmt. Dabei werden Betonboden und Wände beschädigt.',
+    cam: [0.75, 1.55, 0.95, -1.4, 0.65, -1.6] },
+  { step: 2, short: '2', title: 'Kleberreste & Schutt entsorgen', dur: 11, work: [5, 8], block: 'Kleberreste entfernen, Schutt sortieren & entsorgen: 5–8 Std.',
+    desc: 'Kleberreste werden abgeschabt, der Schutt sortiert, in die Schuttwanne geschaufelt und entsorgt.',
+    cam: [1.55, 1.85, 1.15, -0.6, 0.2, -0.5] },
+  { step: 3, short: '3', title: 'Untergrund prüfen & reparieren', dur: 11, work: [8, 14], block: 'Wände & Betonboden reparieren: 8–14 Std.',
+    desc: 'Untergrund wird geprüft. Rotband-Reparaturputz nur für geeignete Wandbereiche, Reparaturmörtel für den Betonboden.',
+    wait: { txt: 'Rotband & Reparaturmörtel: Aushärtung je nach Schichtdicke', val: '24–48 Std.', h: 36 },
+    cam: [1.05, 1.5, 0.85, -1.6, 0.55, -1.2] },
+  { step: 4, short: '4', title: 'Grundieren & ausgleichen', dur: 11, work: [3, 5], share: 'Block „Grundierung, Bodenausgleich, Abdichtung“: 6–10 Std. (Schritt 4 + 5, anteilig)',
+    desc: 'Tiefengrund wird mit Rolle und Pinsel aufgetragen. Der Boden wird bei Bedarf mit Bodenausgleichsmasse ausgeglichen.',
+    wait: { txt: 'Tiefengrund lt. Datenblatt trocknen · Bodenausgleich muss belegreif werden', val: '4–24 / 24–48 Std.', h: 36 },
+    cam: [1.6, 1.95, 1.25, -0.5, 0.0, -0.45] },
+  { step: 5, short: '5', title: 'Abdichten', dur: 10, work: [3, 5], share: 'Block „Grundierung, Bodenausgleich, Abdichtung“: 6–10 Std. (Schritt 4 + 5, anteilig)',
+    desc: 'System-Set im Duschbereich, Dichtband an allen Anschlüssen, Dichtecken und Manschetten an Rohren und Ablauf.',
+    wait: { txt: 'Abdichtung & Dichtband: vollständige Freigabe für Fliesenkleber abwarten', val: '24–48 Std.', h: 36 },
+    cam: [0.35, 1.45, 0.45, -1.7, 0.5, -1.4] },
+  { step: 6, short: '6', title: 'Fliesen zuschneiden & verlegen', dur: 17, work: [18, 30], block: 'Zuschneiden & Verlegen: 18–30 Std.',
+    desc: 'Ca. 15 m² Bodenfliesen und ca. 35 m² Wandfliesen. Flexkleber ca. 2–4 kg/m², Kanten mit Abschlussprofilen.',
+    wait: { txt: 'Fliesenkleber muss vor dem Verfugen durchhärten', val: '24 Std.', h: 24 },
+    cam: [1.5, 1.7, 1.2, -1.0, 0.55, -1.0] },
+  { step: 7, short: '7', title: 'Verfugen & silikonieren', dur: 12, work: [2, 4], share: 'Block „Verfugen, Silikon, Armaturen, Endreinigung“: 6–12 Std. (Schritt 7–9, anteilig)',
+    desc: 'Fugenmörtel einarbeiten und abwaschen. Anschluss- und Bewegungsfugen mit Sanitärsilikon schließen.',
+    wait: { txt: 'Fugenmörtel bis zur Belastung · Silikon vor erster Wasserbelastung aushärten', val: '24 Std.', h: 24 },
+    cam: [0.45, 1.25, 0.35, -1.6, 0.35, -1.5] },
+  { step: 8, short: '8', title: 'Armaturen montieren & prüfen', dur: 10, work: [2, 4], share: 'Block „Verfugen, Silikon, Armaturen, Endreinigung“: 6–12 Std. (Schritt 7–9, anteilig)',
+    desc: 'Neue Duscharmatur wird montiert. Danach werden alle Anschlüsse geprüft.',
+    cam: [0.25, 1.5, 0.15, -1.55, 1.2, -1.6] },
+  { step: 9, short: '9', title: 'Endreinigung', dur: 8, work: [2, 4], share: 'Block „Verfugen, Silikon, Armaturen, Endreinigung“: 6–12 Std. (Schritt 7–9, anteilig)',
+    desc: 'Gründliche Endreinigung, Abdeckfolien und Staubschutz werden entfernt.',
+    cam: [1.7, 1.75, 1.35, -1.0, 0.6, -1.0] },
+  { step: 10, short: '✓', title: 'Ergebnis', dur: 0, work: [0, 0],
+    desc: 'Das Bad ist fertig: neue Wand- und Bodenfliesen, abgedichtet, verfugt, neue Duscharmatur.',
+    cam: [1.75, 1.7, 1.4, -1.0, 0.7, -1.0] }
+];
+const WAIT_SEC = 4.5;
+const LAST = PHASES.length - 1;
+let acc = [0, 0];
+PHASES.forEach(p => { p.cumStart = acc.slice(); acc = [acc[0] + p.work[0], acc[1] + p.work[1]]; p.cumEnd = acc.slice(); });
+// acc = [59, 98]  → identisch mit Blatt 6
+
+/* ---------- Werkzeuge (Blatt 2) ---------- */
+const CATS = ['Abriss', 'Schutt & Reinigung', 'Arbeitsschutz', 'Messen & Ausrichten', 'Mischen & Reparieren', 'Fliesenlegen', 'Verfugen & Montage'];
+// [key, Name, Kategorie, PHASES-Indizes (1=Schritt 1, 2/3=Schritt 2, 4=Schritt 3 … 10=Schritt 9), Modell]
+const W19 = [1, 2, 3, 4, 5, 6, 7, 8, 9], W110 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const TOOLS = [
+  ['bohrhammer', 'Bohrhammer / Abbruchhammer', 0, [2], 'hammerdrill'],
+  ['flachmeissel', 'Flachmeißel', 0, [2], 'flatchisel'],
+  ['spitzmeissel', 'Spitzmeißel', 0, [2], 'pointchisel'],
+  ['handmeissel', 'Handmeißel', 0, [2], 'handchisel'],
+  ['faeustel', 'Fäustel', 0, [2], 'sledge'],
+  ['spachtel', 'Spachtel', 0, [3, 4], 'putty'],
+  ['schaber', 'Schaber', 0, [3], 'scraper'],
+  ['schuttwanne', 'Schuttwanne', 1, [2, 3], 'tub'],
+  ['eimer1', 'Eimer (Schutt)', 1, [2, 3], 'bucket'],
+  ['schaufel', 'Schaufel', 1, [3], 'shovel'],
+  ['besen', 'Besen', 1, [3, 10], 'broom'],
+  ['sauger', 'Baustellensauger', 1, [3, 10], 'vacuum'],
+  ['folie', 'Abdeckfolien', 1, W19, 'foil'],
+  ['staubschutz', 'Staubschutz (Tür)', 1, W19, 'dustdoor'],
+  ['brille', 'Schutzbrille', 2, W110, 'goggles'],
+  ['gehoer', 'Gehörschutz', 2, W110, 'earmuff'],
+  ['atem', 'Atemschutz', 2, W110, 'mask'],
+  ['handschuhe', 'Handschuhe', 2, W110, 'gloves'],
+  ['schuhe', 'Sicherheitsschuhe', 2, W110, 'boots'],
+  ['massband', 'Maßband', 3, [1], 'tape'],
+  ['zollstock', 'Zollstock', 3, [1, 7], 'folding'],
+  ['bleistift', 'Bleistift', 3, [1, 7], 'pencil'],
+  ['wasserwaage', 'Wasserwaage', 3, [1, 4, 7], 'level'],
+  ['richtlatte', 'Richtlatte', 3, [1, 4], 'straightedge'],
+  ['winkel', 'Winkel', 3, [1, 7], 'square'],
+  ['laser', 'Schlagschnur / Laser', 3, [1, 7], 'laser'],
+  ['kuebel', 'Mörtelkübel', 4, [4, 5, 7, 8], 'mortartub'],
+  ['eimer2', 'Eimer (Anmischen)', 4, [4, 5, 6, 7, 8, 10], 'bucket'],
+  ['ruehrwerk', 'Rührwerk mit Rühraufsatz', 4, [4, 5, 7, 8], 'mixer'],
+  ['glaettkelle', 'Glättkelle', 4, [4, 5], 'float'],
+  ['putzwerkzeug', 'Putzwerkzeuge', 4, [4], 'plastertools'],
+  ['pinsel', 'Pinsel', 4, [5, 6], 'brush'],
+  ['rolle', 'Rolle', 4, [5, 6], 'roller'],
+  ['fliesenschneider', 'Fliesenschneider', 5, [7], 'tilecutter'],
+  ['nassschneider', 'Nassschneidemaschine (bei Bedarf)', 5, [7], 'wetsaw'],
+  ['zahnkelle', 'Zahnkelle', 5, [7], 'notched'],
+  ['gummihammer', 'Gummihammer', 5, [7], 'rubbermallet'],
+  ['fliesenzange', 'Fliesenzange', 5, [7], 'nippers'],
+  ['bohrkrone', 'Diamantbohrkronen', 5, [7], 'coredrill'],
+  ['fugbrett', 'Fugbrett', 6, [8], 'groutfloat'],
+  ['schwamm', 'Schwämme', 6, [8, 10], 'sponge'],
+  ['waschset', 'Waschset', 6, [8], 'washset'],
+  ['abstandshalter', 'Abstandshalter', 6, [7], 'spacers'],
+  ['nivellier', 'Nivellierclips', 6, [7, 8], 'clips'],
+  ['knieschoner', 'Knieschoner', 6, [7, 8], 'kneepads'],
+  ['kartusche', 'Kartuschenpistole', 6, [8], 'caulkgun'],
+  ['silikonwz', 'Silikonwerkzeug', 6, [8], 'siltool'],
+  ['cutter', 'Cuttermesser', 6, [1, 6, 8], 'cutter'],
+  ['armschluessel', 'Armaturenschlüssel', 6, [9], 'wrench']
+].map(t => ({ key: t[0], name: t[1], cat: t[2], ph: t[3], model: t[4] }));
+const TOOL = {}; TOOLS.forEach(t => TOOL[t.key] = t);
+
+/* ---------- Baustoffe (Blatt 3) & Preise (Blatt 4) · ph = PHASES-Index ---------- */
+const MATS = [
+  { key: 'wandfliesen', name: 'Wandfliesen', menge: '≈ 35 m² (inkl. Reserve)', preis: 'Fliesen gesamt ≈ 672 €', ph: 7 },
+  { key: 'bodenfliesen', name: 'Bodenfliesen', menge: '≈ 15 m² (bodengeeignet)', preis: 'in 672 € enthalten', ph: 7 },
+  { key: 'flexkleber', name: 'Flex-Fliesenkleber', menge: '7 Säcke à 20 kg (5–9)', preis: '90–160 €', ph: 7 },
+  { key: 'tiefengrund', name: 'Tiefengrund', menge: '1 Eimer à 10 L (5–10 L)', preis: '43,99 €', ph: 5 },
+  { key: 'rotband', name: 'Rotband-Reparaturputz', menge: '2 Säcke à 30 kg (vorläufig)', preis: 'mit Reparaturmörtel ≈ 132 €', ph: 4 },
+  { key: 'repmoertel', name: 'Reparaturmörtel', menge: 'Menge erst nach Freilegung', preis: 'in 132 € enthalten', ph: 4 },
+  { key: 'ausgleich', name: 'Bodenausgleichsmasse', menge: 'Menge erst nach Freilegung', preis: '≈ 182 €', ph: 5 },
+  { key: 'abdichtset', name: 'Abdichtung System-Set Dusche', menge: '1 Set', preis: 'Abdichtung & Zubehör 100–150 €', ph: 6 },
+  { key: 'dichtband', name: 'Dichtband, Ecken & Manschetten', menge: '1 Systempaket', preis: 'in 100–150 € enthalten', ph: 6 },
+  { key: 'fugenmoertel', name: 'Fugenmörtel', menge: '3–5 Gebinde à 5 kg', preis: '20–35 €', ph: 8 },
+  { key: 'silikon', name: 'Sanitärsilikon', menge: '2–4 Kartuschen', preis: '≈ 24 €', ph: 8 },
+  { key: 'profile', name: 'Profile inkl. Kleinmaterial', menge: 'Abschlusskante 1,30 m', preis: '168–335 €', ph: 7 },
+  { key: 'armatur', name: 'Duscharmatur', menge: '1 Set', preis: '50–70 €', ph: 9 }
+];
+const MAT = {}; MATS.forEach(m => MAT[m.key] = m);
+
+const BUDGET = [
+  ['Material', '≈ 1.455 – 1.780 €'],
+  ['Werkzeuge & Gerätemiete', '≈ 600 – 800 €'],
+  ['Entsorgung', '≈ 100 – 750 € oder mehr'],
+  ['Gesamt (ohne Arbeitslohn)', '≈ 2.200 – 3.350 €']
+];
+
+/* ---------- Render-Helfer ---------- */
+const lin = h => new THREE.Color(h).convertSRGBToLinear();
+function M(hex, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: lin(hex), roughness: 0.75, metalness: 0 }, o || {})); }
+function tex(w, h, draw, rep) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+  if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); }
+  return t;
+}
+function noiseTex(base, spread, n, rep) {
+  return tex(256, 256, (g, w, h) => {
+    g.fillStyle = base; g.fillRect(0, 0, w, h);
+    const r = rng(n);
+    for (let i = 0; i < 2600; i++) { const v = (r() - 0.5) * spread; g.fillStyle = v > 0 ? `rgba(255,255,255,${v})` : `rgba(0,0,0,${-v})`; g.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3); }
+  }, rep);
+}
+function mesh(geo, mat, cast = true) { const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = true; return m; }
+function box(w, h, d, mat) { return mesh(new THREE.BoxGeometry(w, h, d), mat); }
+function cyl(rt, rb, h, mat, seg = 18, open = false) { return mesh(new THREE.CylinderGeometry(rt, rb, h, seg, 1, open), mat); }
+function sph(r, mat, a = 18, b = 12) { return mesh(new THREE.SphereGeometry(r, a, b), mat); }
+function at(o, x, y, z, rx = 0, ry = 0, rz = 0) { o.position.set(x, y, z); o.rotation.set(rx, ry, rz); return o; }
+function grp() { const g = new THREE.Group(); for (const c of arguments) g.add(c); return g; }
+const anchorPlane = () => new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);                    // x 0..1, y 0..1
+const anchorFloor = () => new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0.5, 0, 0.5); // x 0..1, z 0..1
+function wallPlane(w, s0, len, y0, h, d, mat) { const m = mesh(anchorPlane(), mat, false); m.position.copy(wp(w, s0, y0, d)); m.rotation.y = w.ry; m.scale.set(len, h, 1); m.userData.len = len; return m; }
+function wallStrip(w, s0, len, y, depth, mat) { const m = mesh(anchorFloor(), mat, false); m.position.copy(wp(w, s0, y, 0.004)); m.rotation.y = w.ry; m.scale.set(len, 1, depth); m.userData.len = len; return m; }
+
+/* ---------- Szene-Zustand ---------- */
+const S = { ready: false, phase: 0, t: 0, running: false, view: 'innen', inv: 0, invTarget: 0, labelsOn: true, U: [], W: [], lastU: null };
+let scene, camera, renderer, container, root, invRoot, spot, hemi, lampMat, clockH, clockM;
+const wallGroups = [], wallBoxes = [], LAY = {};
+
+const MAT_C = {};
+function buildMaterials() {
+  MAT_C.concrete = M(0xffffff, { map: noiseTex('#8e8a83', 0.22, 3, [3, 2]), roughness: 0.95 });
+  MAT_C.concreteF = M(0xffffff, { map: noiseTex('#86827b', 0.25, 4, [4, 3]), roughness: 0.95 });
+  MAT_C.plaster = M(0xffffff, { map: noiseTex('#ecebe6', 0.06, 5, [3, 2]), roughness: 0.92 });
+  MAT_C.ceiling = M(0xf3f2ee, { roughness: 0.95 });
+  MAT_C.frame = M(0xf4f4f2, { roughness: 0.5 });
+  MAT_C.hall = M(0xffffff, { map: tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#7a5a3d' : '#84634a'; g.fillRect(0, i * 32, w, 32); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, i * 32, w, 1); } }, [2, 2]), roughness: 0.6 });
+  MAT_C.chrome = M(0xe3e8ec, { metalness: 0.75, roughness: 0.18 });
+  MAT_C.chromeOld = M(0xb7b3a6, { metalness: 0.45, roughness: 0.45 });
+  MAT_C.oldTile = M(0xffffff, { roughness: 0.3, map: tex(64, 64, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(120,100,60,.35)'; g.lineWidth = 2; g.beginPath(); g.arc(32, 32, 14, 0, 7); g.stroke(); g.beginPath(); g.arc(32, 32, 6, 0, 7); g.stroke(); }) });
+  MAT_C.oldFloor = M(0xffffff, { roughness: 0.45, map: noiseTex('#ffffff', 0.25, 9) });
+  const stone = (base, n, seed) => tex(256, 128, (g, w, h) => {
+    g.fillStyle = base; g.fillRect(0, 0, w, h); const r = rng(seed);
+    for (let i = 0; i < 45; i++) { g.strokeStyle = `rgba(${n},${0.04 + r() * 0.08})`; g.lineWidth = 1 + r() * 2; g.beginPath(); let x = r() * w, y = r() * h; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (r() - 0.5) * 60; y += (r() - 0.5) * 30; g.lineTo(x, y); } g.stroke(); }
+    for (let i = 0; i < 1500; i++) { g.fillStyle = `rgba(${n},${r() * 0.05})`; g.fillRect(r() * w, r() * h, 2, 2); }
+  });
+  MAT_C.newWall = M(0xffffff, { roughness: 0.22, map: stone('#e9e6e0', '90,85,78', 21) });
+  MAT_C.newFloor = M(0xffffff, { roughness: 0.4, map: stone('#6f6d6a', '20,20,20', 22) });
+  MAT_C.adhesive = M(0xffffff, { roughness: 0.95, map: tex(64, 64, (g, w, h) => { g.fillStyle = '#9a9b9c'; g.fillRect(0, 0, w, h); g.fillStyle = '#7d7e80'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 3); }) });
+  MAT_C.grout = M(0xb9bcbd, { roughness: 0.95 });
+  MAT_C.silicone = M(0xf2f3f4, { roughness: 0.35 });
+  MAT_C.profile = M(0xd3d7da, { metalness: 0.7, roughness: 0.3 });
+  MAT_C.residue = M(0xffffff, { transparent: true, depthWrite: false, roughness: 1, map: tex(256, 128, (g, w, h) => { const r = rng(31); for (let i = 0; i < 140; i++) { g.fillStyle = `rgba(165,160,150,${0.35 + r() * 0.5})`; g.beginPath(); g.ellipse(r() * w, r() * h, 6 + r() * 22, 4 + r() * 12, r() * 3, 0, 7); g.fill(); } }) });
+  MAT_C.damage = M(0xffffff, { transparent: true, depthWrite: false, roughness: 1, map: tex(128, 128, (g, w, h) => {
+    const r = rng(77); const gr = g.createRadialGradient(64, 64, 4, 64, 64, 60); gr.addColorStop(0, 'rgba(45,40,36,.95)'); gr.addColorStop(0.55, 'rgba(70,64,58,.85)'); gr.addColorStop(1, 'rgba(90,85,80,0)');
+    g.fillStyle = gr; g.beginPath(); for (let a = 0; a < 6.3; a += 0.35) { const rr = 40 + r() * 22; g.lineTo(64 + Math.cos(a) * rr, 64 + Math.sin(a) * rr); } g.fill();
+    g.strokeStyle = 'rgba(30,28,25,.9)'; g.lineWidth = 2; for (let k = 0; k < 5; k++) { g.beginPath(); let x = 64, y = 64; g.moveTo(x, y); for (let i = 0; i < 5; i++) { x += (r() - 0.5) * 40; y += (r() - 0.5) * 40; g.lineTo(x, y); } g.stroke(); }
+  }) });
+  MAT_C.tiefgrund = M(0xbcd6e6, { transparent: true, opacity: 0, depthWrite: false, roughness: 0.15 });
+  MAT_C.leveling = M(0x8f9396, { roughness: 0.1, clippingPlanes: [new THREE.Plane(new V3(-1, 0, 0), X1), new THREE.Plane(new V3(1, 0, 0), -X0), new THREE.Plane(new V3(0, 0, -1), Z1), new THREE.Plane(new V3(0, 0, 1), -Z0)] });
+  MAT_C.seal = M(0x2f9fbf, { transparent: true, opacity: 0, roughness: 0.2 });
+  MAT_C.band = M(0xa8c6d6, { roughness: 0.85, side: THREE.DoubleSide });
+  MAT_C.cap = M(0xd23b2f, { roughness: 0.5 });
+  MAT_C.capB = M(0x2f6fd2, { roughness: 0.5 });
+  MAT_C.ovYellow = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0, depthWrite: false });
+  MAT_C.ovRed = new THREE.MeshBasicMaterial({ color: 0xe23b2b, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+  MAT_C.ovBlue = new THREE.MeshBasicMaterial({ color: 0x3aa0ff, transparent: true, opacity: 0, depthWrite: false });
+  MAT_C.laser = new THREE.MeshBasicMaterial({ color: 0xff2a1a, transparent: true, opacity: 0 });
+}
+
+/* ---------- Raum ---------- */
+function buildRoom() {
+  root.add(at(box(RW + 0.4, 0.2, RD + 0.4, MAT_C.concreteF), 0, -0.1, 0));
+  // Flur vor der Tür (Blick durch die Türöffnung)
+  root.add(at(box(2.2, 0.05, 1.8, MAT_C.hall), 1.3, -0.02, Z1 + 1.05));
+  WALLS.forEach((w, i) => {
+    const g = new THREE.Group(); wallGroups.push(g); root.add(g);
+    const pieces = w.door ? [[-0.2, DOOR.s0], [DOOR.s1, w.L + 0.2]] : [[-0.2, w.L + 0.2]];
+    pieces.forEach(([a, b]) => {
+      const len = b - a, c = (a + b) / 2;
+      const lo = box(len, TH, 0.15, MAT_C.concrete); lo.position.copy(wp(w, c, TH / 2, -0.075)); lo.rotation.y = w.ry; g.add(lo);
+      const up = box(len, RH - TH, 0.15, MAT_C.plaster); up.position.copy(wp(w, c, TH + (RH - TH) / 2, -0.075)); up.rotation.y = w.ry; g.add(up);
+    });
+    if (w.door) {
+      const c = (DOOR.s0 + DOOR.s1) / 2, wd = DOOR.s1 - DOOR.s0;
+      const top = box(wd, RH - DOOR.h, 0.15, MAT_C.plaster); top.position.copy(wp(w, c, DOOR.h + (RH - DOOR.h) / 2, -0.075)); top.rotation.y = w.ry; g.add(top);
+      [DOOR.s0, DOOR.s1].forEach(s => { const f = box(0.04, DOOR.h, 0.2, MAT_C.frame); f.position.copy(wp(w, s, DOOR.h / 2, -0.07)); f.rotation.y = w.ry; g.add(f); });
+      const fh = box(wd + 0.08, 0.04, 0.2, MAT_C.frame); fh.position.copy(wp(w, c, DOOR.h, -0.07)); fh.rotation.y = w.ry; g.add(fh);
+    }
+  });
+  // Decke + Lampe
+  const ceil = at(box(RW + 0.4, 0.1, RD + 0.4, MAT_C.ceiling), 0, RH + 0.05, 0); ceil.castShadow = false; root.add(ceil); LAY.ceiling = ceil;
+  lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff3d6, emissiveIntensity: 1 });
+  LAY.lamp = at(cyl(0.22, 0.24, 0.05, lampMat, 32), 0, RH - 0.025, 0); LAY.lamp.castShadow = false; root.add(LAY.lamp);
+  // Wanduhr (zeigt den Zeitablauf)
+  const wr = WALLS[1], cg = new THREE.Group();
+  cg.add(at(cyl(0.16, 0.16, 0.03, M(0x222222), 40), 0, 0, 0, Math.PI / 2));
+  cg.add(at(cyl(0.145, 0.145, 0.032, M(0xfafafa), 40), 0, 0, 0.002, Math.PI / 2));
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; cg.add(at(box(0.012, i % 3 ? 0.02 : 0.035, 0.005, M(0x222222)), Math.sin(a) * 0.12, Math.cos(a) * 0.12, 0.02, 0, 0, -a)); }
+  clockH = new THREE.Group(); clockH.add(at(box(0.012, 0.075, 0.006, M(0x111111)), 0, 0.035, 0)); clockH.position.z = 0.022;
+  clockM = new THREE.Group(); clockM.add(at(box(0.008, 0.11, 0.006, M(0xc0392b)), 0, 0.05, 0)); clockM.position.z = 0.026;
+  cg.add(clockH, clockM);
+  cg.position.copy(wp(wr, 1.6, 1.98, 0.02)); cg.rotation.y = wr.ry; wallGroups[1].add(cg);
+  // Bodenablauf + Rohranschlüsse
+  LAY.drain = grp(at(box(0.16, 0.006, 0.16, MAT_C.chrome), 0, 0, 0));
+  for (let i = -3; i <= 3; i++) LAY.drain.add(at(box(0.012, 0.007, 0.13, M(0x444444)), i * 0.018, 0.0005, 0));
+  LAY.drain.position.copy(DRAIN); root.add(LAY.drain);
+  LAY.pipes = PIPE_S.map((s, i) => { const p = grp(at(cyl(0.013, 0.013, 0.05, M(0xb87333, { metalness: 0.6, roughness: 0.35 })), 0, 0, 0.025, Math.PI / 2), at(cyl(0.017, 0.017, 0.012, i ? MAT_C.capB : MAT_C.cap), 0, 0, 0.05, Math.PI / 2)); p.position.copy(wp(WALLS[0], s, PIPE_Y, 0)); p.rotation.y = WALLS[0].ry; wallGroups[0].add(p); return p; });
+}
+
+/* ---------- Fliesen-Raster ---------- */
+function wallRects(w, tw, th, j, y0, yTop) {
+  const out = [], sMin = 0.018, sMax = w.L - 0.018;
+  for (let y = y0; y < yTop - 0.015; y += th + j) {
+    const h = Math.min(th, yTop - y);
+    for (let s = sMin; s < sMax - 0.015; s += tw + j) {
+      let a = s, b = Math.min(s + tw, sMax);
+      if (w.door && b > DOOR.s0 && a < DOOR.s1) { if (a < DOOR.s0) b = DOOR.s0 - 0.002; else if (b > DOOR.s1) a = DOOR.s1 + 0.002; else continue; }
+      if (b - a < 0.02) continue;
+      out.push({ s0: a, s1: b, y0: y, y1: y + h });
+    }
+  }
+  return out;
+}
+function floorRects(tw, j) {
+  const out = [];
+  for (let x = X0 + 0.018; x < X1 - 0.03; x += tw + j) for (let z = Z0 + 0.018; z < Z1 - 0.03; z += tw + j)
+    out.push({ x0: x, x1: Math.min(x + tw, X1 - 0.018), z0: z, z1: Math.min(z + tw, Z1 - 0.018) });
+  return out;
+}
+const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _m = new THREE.Matrix4(), _s = new V3(), _p = new V3();
+function makeSet(recs, mat, cast) {
+  const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, recs.length);
+  im.frustumCulled = false; im.receiveShadow = true; im.castShadow = !!cast;
+  recs.forEach((r, i) => { im.setMatrixAt(i, _m.compose(r.pos, r.quat, r.scl)); im.setColorAt(i, r.col || new THREE.Color(1, 1, 1)); });
+  im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+  return im;
+}
+function wallRec(w, wi, r, d, thick) {
+  return { wi, w, pos: wp(w, (r.s0 + r.s1) / 2, (r.y0 + r.y1) / 2, d + thick / 2), quat: new THREE.Quaternion().setFromEuler(new THREE.Euler(0, w.ry, 0)), scl: new V3(r.s1 - r.s0, r.y1 - r.y0, thick), r };
+}
+function floorRec(r, y, thick) {
+  return { wi: -1, pos: new V3((r.x0 + r.x1) / 2, y + thick / 2, (r.z0 + r.z1) / 2), quat: new THREE.Quaternion(), scl: new V3(r.x1 - r.x0, thick, r.z1 - r.z0), r };
+}
+
+function buildTiles() {
+  /* --- alte Fliesen (20×20 Wand, 30×30 Boden) --- */
+  const oldPal = [0xc9b98f, 0xcfc29b, 0xc3b287, 0xd2c6a2].map(lin), floorPal = [0x8b5b3d, 0x845537, 0x93644a].map(lin);
+  LAY.old = [];
+  WALLS.forEach((w, wi) => {
+    const recs = wallRects(w, 0.2, 0.2, 0.002, 0.013, TH).map(r => wallRec(w, wi, r, 0.004, 0.008));
+    recs.forEach(rc => { rc.col = oldPal[Math.floor(R() * 4)].clone(); if (R() < 0.05) rc.col.multiplyScalar(0.8); rc.loose = R() < 0.05; });
+    const im = makeSet(recs, MAT_C.oldTile); wallGroups[wi].add(im); LAY.old.push({ im, recs, wall: w });
+  });
+  const frecs = floorRects(0.3, 0.003).map(r => floorRec(r, 0.004, 0.008));
+  frecs.forEach(rc => { rc.col = floorPal[Math.floor(R() * 3)].clone(); });
+  const fim = makeSet(frecs, MAT_C.oldFloor); root.add(fim); LAY.old.push({ im: fim, recs: frecs, wall: null });
+  // Reihenfolge & Bahnen für Abriss / Schuttabfuhr
+  let all = []; LAY.old.forEach((set, k) => set.recs.forEach(rc => { rc.set = k; all.push(rc); }));
+  const wallOrder = { 0: 0, 3: 1, 1: 2, 2: 3 };
+  all.forEach(rc => {
+    if (rc.wi >= 0) rc.key = wallOrder[rc.wi] * 10 + (1 - rc.r.y1 / TH) * 3 + rc.r.s0 / rc.w.L * 2.5 + R() * 0.4;
+    else rc.key = 45 + (rc.pos.x - X0) / RW * 6 + R() * 0.8;
+  });
+  all.sort((a, b) => a.key - b.key);
+  all.forEach((rc, i) => {
+    rc.tr = 0.04 + i / all.length * 0.88;            // Abrisszeit in Phase 2
+    rc.tc = 0.12 + R() * 0.66;                       // Abtransport in Phase 3
+    if (rc.wi >= 0) {
+      const dist = 0.12 + R() * 0.45;
+      const land = rc.pos.clone().addScaledVector(rc.w.n, dist).addScaledVector(rc.w.u, (R() - 0.5) * 0.3);
+      land.x = clamp(land.x, X0 + 0.1, X1 - 0.1); land.z = clamp(land.z, Z0 + 0.1, Z1 - 0.1); land.y = 0.006 + R() * 0.05;
+      rc.land = land; rc.landQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2 + (R() - 0.5) * 0.5, R() * 6, (R() - 0.5) * 0.4));
+    } else {
+      rc.land = rc.pos.clone(); rc.land.y += 0.012 + R() * 0.03;
+      rc.landQ = new THREE.Quaternion().setFromEuler(new THREE.Euler((R() - 0.5) * 0.35, (R() - 0.5) * 0.6, (R() - 0.5) * 0.35));
+    }
+    rc.scl0 = rc.scl.clone();
+  });
+  LAY.oldAll = all;
+
+  /* --- neue Fliesen: Boden 60×60, Wand 60×30 --- */
+  LAY.newSets = []; LAY.glue = [];
+  const nf = floorRects(0.6, 0.003).map(r => floorRec(r, 0.009, 0.01));
+  nf.forEach(rc => { rc.col = new THREE.Color(1, 1, 1).multiplyScalar(0.92 + R() * 0.08); rc.d = Math.hypot(rc.pos.x - X0, rc.pos.z - Z0) + R() * 0.05; });
+  nf.sort((a, b) => a.d - b.d); nf.forEach((rc, i) => rc.t0 = 0.05 + i / nf.length * 0.36);
+  const nfg = nf.map(rc => ({ pos: rc.pos.clone().setY(0.007), quat: rc.quat, scl: new V3(rc.scl.x - 0.01, 0.004, rc.scl.z - 0.01) }));
+  const nfim = makeSet(nf, MAT_C.newFloor), nfgim = makeSet(nfg, MAT_C.adhesive); root.add(nfim, nfgim);
+  LAY.newSets.push({ im: nfim, recs: nf, glue: nfgim, g: nfg, wall: null });
+  const wallSeq = [0, 3, 1, 2]; let wallAll = [];
+  WALLS.forEach((w, wi) => {
+    const recs = wallRects(w, 0.6, 0.3, 0.003, 0.022, TH).map(r => wallRec(w, wi, r, 0.008, 0.008));
+    recs.forEach(rc => { rc.col = new THREE.Color(1, 1, 1).multiplyScalar(0.94 + R() * 0.06); rc.key = wallSeq.indexOf(wi) * 10 + rc.r.y0 * 4 + rc.r.s0 / w.L; wallAll.push(rc); });
+    const g = recs.map(rc => ({ pos: wp(w, (rc.r.s0 + rc.r.s1) / 2, (rc.r.y0 + rc.r.y1) / 2, 0.006), quat: rc.quat, scl: new V3(rc.scl.x - 0.012, rc.scl.y - 0.012, 0.004) }));
+    const im = makeSet(recs, MAT_C.newWall), gim = makeSet(g, MAT_C.adhesive); wallGroups[wi].add(im, gim);
+    LAY.newSets.push({ im, recs, glue: gim, g, wall: w });
+  });
+  wallAll.sort((a, b) => a.key - b.key); wallAll.forEach((rc, i) => rc.t0 = 0.46 + i / wallAll.length * 0.42);
+  LAY.newSets.forEach(set => set.recs.forEach(rc => { rc.scl0 = rc.scl.clone(); rc.startQ = rc.quat.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler((R() - 0.5) * 0.5, (R() - 0.5) * 0.5, (R() - 0.5) * 0.3))); }));
+
+  /* --- Nivellierclips (Boden) & Abstandshalter (Wand) --- */
+  const clipRecs = [];
+  nf.forEach(rc => { if (rc.r.x1 < X1 - 0.05 && rc.r.z1 < Z1 - 0.05) clipRecs.push({ pos: new V3(rc.r.x1 + 0.0015, 0.024, rc.r.z1 + 0.0015), quat: new THREE.Quaternion(), scl: new V3(0.035, 0.012, 0.035), t0: rc.t0 + 0.004 }); });
+  LAY.clips = { im: makeSet(clipRecs, M(0xd8322a, { roughness: 0.5 }), true), recs: clipRecs }; root.add(LAY.clips.im);
+  const spRecs = [];
+  LAY.newSets.slice(1).forEach(set => set.recs.forEach(rc => { if (rc.r.y1 < TH - 0.05) spRecs.push({ pos: wp(set.wall, rc.r.s1 + 0.0015, rc.r.y1 + 0.0015, 0.017), quat: rc.quat, scl: new V3(0.012, 0.012, 0.006), t0: rc.t0 + 0.002, wi: rc.wi }); }));
+  LAY.spacers = { im: makeSet(spRecs, M(0xf5f5f5)), recs: spRecs }; root.add(LAY.spacers.im);
+}
+
+/* ---------- Schichten: Schäden, Putz, Grund, Ausgleich, Abdichtung, Fugen, Silikon, Profile ---------- */
+function buildLayers() {
+  LAY.residue = WALLS.map((w, wi) => { const m = wallPlane(w, 0, w.L, 0, TH, 0.0025, MAT_C.residue.clone()); wallGroups[wi].add(m); return m; });
+  LAY.residueF = mesh(anchorFloor(), MAT_C.residue.clone(), false); at(LAY.residueF, X0, 0.0025, Z0); LAY.residueF.scale.set(RW, 1, RD); root.add(LAY.residueF);
+  // Schadstellen + Reparatur-Flicken
+  LAY.spots = [];
+  const rotbandWet = lin(0xa89189), rotbandDry = lin(0xe1d2cb), repWet = lin(0x5d5e60), repDry = lin(0xa3a5a7);
+  WALLS.forEach((w, wi) => {
+    const n = w.door ? 3 : 4;
+    for (let k = 0; k < n; k++) {
+      let s = 0.3 + R() * (w.L - 0.6); if (w.door && s > DOOR.s0 - 0.25 && s < DOOR.s1 + 0.25) s = DOOR.s1 + 0.4 + R() * 1.5;
+      const y = 0.2 + R() * 0.9, r = 0.1 + R() * 0.14;
+      const dmg = mesh(new THREE.PlaneGeometry(r * 2.2, r * 2), MAT_C.damage, false); dmg.position.copy(wp(w, s, y, 0.003)); dmg.rotation.y = w.ry; dmg.rotation.z = R() * 3; wallGroups[wi].add(dmg);
+      const pm = M(0xffffff, { roughness: 0.9, transparent: true, opacity: 0 }); pm.color.copy(rotbandWet);
+      const patch = mesh(new THREE.CircleGeometry(r * 1.25, 20), pm, false); patch.position.copy(wp(w, s, y, 0.0035)); patch.rotation.y = w.ry; patch.scale.set(1.15, 0.95, 1); wallGroups[wi].add(patch);
+      LAY.spots.push({ dmg, patch, wet: rotbandWet, dry: rotbandDry, wi, w, s, y, pos: wp(w, s, y, 0.05), t: 0 });
+    }
+  });
+  for (let k = 0; k < 7; k++) {
+    const x = X0 + 0.4 + R() * (RW - 0.8), z = Z0 + 0.4 + R() * (RD - 0.8), r = 0.12 + R() * 0.16;
+    const dmg = mesh(new THREE.PlaneGeometry(r * 2.2, r * 2).rotateX(-Math.PI / 2), MAT_C.damage, false); at(dmg, x, 0.003, z, 0, R() * 3); root.add(dmg);
+    const pm = M(0xffffff, { roughness: 0.9, transparent: true, opacity: 0 }); pm.color.copy(repWet);
+    const patch = mesh(new THREE.CircleGeometry(r * 1.2, 20).rotateX(-Math.PI / 2), pm, false); at(patch, x, 0.0035, z); root.add(patch);
+    LAY.spots.push({ dmg, patch, wet: repWet, dry: repDry, wi: -1, pos: new V3(x, 0.0, z), t: 0 });
+  }
+  LAY.spots.forEach((sp, i) => sp.t = 0.2 + i / LAY.spots.length * 0.68);
+  // Tiefengrund-Film (Wand + Boden), wächst mit der Rolle
+  LAY.prime = WALLS.map((w, wi) => w.iv.map(([a, b]) => { const m = wallPlane(w, a, b - a, 0, TH, 0.0042, MAT_C.tiefgrund); wallGroups[wi].add(m); return m; }));
+  LAY.primeF = mesh(anchorFloor(), MAT_C.tiefgrund, false); at(LAY.primeF, X0, 0.0042, Z0); LAY.primeF.scale.set(RW, 1, RD); root.add(LAY.primeF);
+  // Bodenausgleich (fließt von der Ausgießstelle aus)
+  LAY.level = mesh(new THREE.CircleGeometry(1, 48).rotateX(-Math.PI / 2), MAT_C.leveling, false); at(LAY.level, 0.25, 0.0048, 0.15); root.add(LAY.level);
+  // Abdichtung Duschbereich
+  LAY.seal = [];
+  const sb = wallPlane(WALLS[0], 0, 1.1, 0, TH, 0.0044, MAT_C.seal); wallGroups[0].add(sb); LAY.seal.push(sb);
+  const sl = wallPlane(WALLS[3], RD - 1.1, 1.1, 0, TH, 0.0044, MAT_C.seal); wallGroups[3].add(sl); LAY.seal.push(sl);
+  const sf = mesh(anchorFloor(), MAT_C.seal, false); at(sf, X0, 0.0052, Z0); sf.scale.set(1.1, 1, 1.1); root.add(sf); LAY.seal.push(sf);
+  // Dichtband (Wand-Boden-Fugen + Duschecke), Dichtecken, Manschetten
+  LAY.band = [];
+  WALLS.forEach((w, wi) => w.iv.forEach(([a, b]) => {
+    const ws = wallPlane(w, a, b - a, 0.005, 0.07, 0.0046, MAT_C.band), fs = wallStrip(w, a, b - a, 0.0054, 0.07, MAT_C.band);
+    fs.position.copy(wp(w, a, 0.0054, 0.0046)); wallGroups[wi].add(ws, fs); LAY.band.push(ws, fs);
+  }));
+  const cv1 = wallPlane(WALLS[0], 0, 0.07, 0.005, TH, 0.0047, MAT_C.band), cv2 = wallPlane(WALLS[3], RD - 0.07, 0.07, 0.005, TH, 0.0047, MAT_C.band);
+  wallGroups[0].add(cv1); wallGroups[3].add(cv2); LAY.band.push(cv1, cv2);
+  LAY.band.forEach((m, i) => m.userData.t = i / LAY.band.length);
+  LAY.corners = [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]].map(([x, z]) => { const m = at(box(0.12, 0.002, 0.12, MAT_C.band), x + Math.sign(-x) * 0.06, 0.006, z + Math.sign(-z) * 0.06); m.castShadow = false; root.add(m); return m; });
+  LAY.cuffs = PIPE_S.map(s => { const m = mesh(new THREE.RingGeometry(0.02, 0.07, 4, 1, Math.PI / 4), MAT_C.band, false); m.position.copy(wp(WALLS[0], s, PIPE_Y, 0.0048)); m.rotation.y = WALLS[0].ry; wallGroups[0].add(m); return m; });
+  const dc = mesh(new THREE.RingGeometry(0.09, 0.22, 4, 1, Math.PI / 4).rotateX(-Math.PI / 2), MAT_C.band, false); at(dc, DRAIN.x, 0.0056, DRAIN.z); root.add(dc); LAY.cuffs.push(dc);
+  // Fugen (Fugenmörtel) – Fläche hinter den Fliesenfronten
+  LAY.grout = [];
+  WALLS.forEach((w, wi) => w.iv.forEach(([a, b]) => { const m = wallPlane(w, a, b - a, 0.02, TH - 0.02, 0.0145, MAT_C.grout); m.userData.wi = wi; wallGroups[wi].add(m); LAY.grout.push(m); }));
+  const gf = mesh(anchorFloor(), MAT_C.grout, false); at(gf, X0, 0.0175, Z0); gf.scale.set(RW, 1, RD); gf.userData.len = RW; root.add(gf); LAY.groutF = gf;
+  // Silikonfugen
+  LAY.sil = [];
+  const bead = () => new THREE.BoxGeometry(1, 1, 1).translate(0.5, 0, 0);
+  WALLS.forEach((w, wi) => w.iv.forEach(([a, b]) => { const m = mesh(bead(), MAT_C.silicone, false); m.userData.w = w; m.position.copy(wp(w, a + 0.01, 0.021, 0.018)); m.rotation.set(0, w.ry, 0); m.rotateX(Math.PI / 4); m.scale.set(b - a - 0.02, 0.008, 0.008); m.userData.len = b - a - 0.02; wallGroups[wi].add(m); LAY.sil.push(m); }));
+  [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]].forEach(([x, z]) => { const m = mesh(new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), MAT_C.silicone, false); at(m, x - Math.sign(x) * 0.017, 0.02, z - Math.sign(z) * 0.017, 0, Math.PI / 4); m.scale.set(0.008, TH - 0.02, 0.008); m.userData.len = TH - 0.02; m.userData.vert = true; root.add(m); LAY.sil.push(m); });
+  LAY.sil.forEach((m, i) => m.userData.t = i / LAY.sil.length);
+  // Abschlussprofile (Oberkante 1,30 m + Türkanten)
+  LAY.prof = [];
+  WALLS.forEach((w, wi) => w.iv.forEach(([a, b]) => { const m = box(b - a, 0.012, 0.016, MAT_C.profile); m.position.copy(wp(w, (a + b) / 2, TH + 0.004, 0.01)); m.rotation.y = w.ry; m.castShadow = false; wallGroups[wi].add(m); LAY.prof.push(m); }));
+  [DOOR.s0, DOOR.s1].forEach(s => { const m = box(0.012, TH, 0.016, MAT_C.profile); m.position.copy(wp(WALLS[2], s, TH / 2, 0.01)); m.rotation.y = WALLS[2].ry; wallGroups[2].add(m); LAY.prof.push(m); });
+  // Aufmaß-Overlays (Schritt 1) + Laserlinie 1,30 m
+  LAY.ovWall = []; LAY.laser = [];
+  WALLS.forEach((w, wi) => w.iv.forEach(([a, b]) => {
+    const o = wallPlane(w, a, b - a, 0.013, TH - 0.013, 0.02, MAT_C.ovYellow); wallGroups[wi].add(o); LAY.ovWall.push(o);
+    const l = box(b - a, 0.006, 0.004, MAT_C.laser); l.castShadow = false; l.position.copy(wp(w, (a + b) / 2, TH, 0.022)); l.rotation.y = w.ry; wallGroups[wi].add(l); LAY.laser.push(l);
+  }));
+  LAY.ovDoor = wallPlane(WALLS[2], DOOR.s0, DOOR.s1 - DOOR.s0, 0.013, TH - 0.013, 0.0, MAT_C.ovRed); wallGroups[2].add(LAY.ovDoor);
+  LAY.ovFloor = mesh(anchorFloor(), MAT_C.ovBlue, false); at(LAY.ovFloor, X0, 0.03, Z0); LAY.ovFloor.scale.set(RW, 1, RD); root.add(LAY.ovFloor);
+}
+
+/* ---------- Werkzeug-Modelle (vereinfacht, maßstäblich) ---------- */
+let K;
+function buildKit() {
+  K = {
+    black: M(0x1e1f21, { roughness: 0.8 }), dgrey: M(0x3b3f43), grey: M(0x8a9096), steel: M(0xaab1b8, { metalness: 0.8, roughness: 0.32 }),
+    wood: M(0xb7864f, { roughness: 0.7 }), red: M(0xc0392b, { roughness: 0.5 }), yellow: M(0xf2c40f, { roughness: 0.5 }), green: M(0x2f8f5b, { roughness: 0.45 }),
+    orange: M(0xe67e22, { roughness: 0.5 }), blue: M(0x2f6fd2, { roughness: 0.5 }), white: M(0xf3f3f1, { roughness: 0.6 }), rubber: M(0x232323, { roughness: 0.95 }),
+    alu: M(0xc9ced2, { metalness: 0.6, roughness: 0.35 }), glass: M(0xbfe3f2, { transparent: true, opacity: 0.45, roughness: 0.1 }),
+    foil: new THREE.MeshStandardMaterial({ color: lin(0xe8f1f6), transparent: true, opacity: 0.32, roughness: 0.25, side: THREE.DoubleSide, depthWrite: false }),
+    card: M(0xc59a62, { roughness: 0.9 }), cardDark: M(0xa77e4c, { roughness: 0.9 }), sponge: M(0xf3cf3d, { roughness: 1 }), teal: M(0x23a3a8), rubberRed: M(0x8e2b25, { roughness: 0.9 }),
+    ghost: new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.22, wireframe: true })
+  };
+}
+const ROTZ = Math.PI / 2;
+const MODELS = {
+  hammerdrill: () => grp(at(box(0.36, 0.1, 0.08, K.green), 0, 0.1, 0), at(cyl(0.045, 0.045, 0.1, K.dgrey), -0.2, 0.1, 0, 0, 0, ROTZ), at(box(0.045, 0.16, 0.04, K.black), -0.2, 0.05, 0, 0, 0, 0.2), at(cyl(0.02, 0.02, 0.06, K.dgrey), 0.2, 0.1, 0, 0, 0, ROTZ), at(cyl(0.009, 0.009, 0.32, K.steel), 0.39, 0.1, 0, 0, 0, ROTZ), at(box(0.05, 0.004, 0.028, K.steel), 0.57, 0.1, 0), at(cyl(0.014, 0.014, 0.16, K.black), 0.12, 0.1, 0.1, ROTZ)),
+  flatchisel: () => grp(at(cyl(0.009, 0.009, 0.32, K.steel, 8), 0, 0.01, 0, 0, 0, ROTZ), at(box(0.05, 0.004, 0.026, K.steel), 0.18, 0.01, 0)),
+  pointchisel: () => grp(at(cyl(0.009, 0.009, 0.3, K.steel, 8), 0, 0.01, 0, 0, 0, ROTZ), at(mesh(new THREE.ConeGeometry(0.01, 0.05, 8), K.steel), 0.175, 0.01, 0, 0, 0, -ROTZ)),
+  handchisel: () => grp(at(cyl(0.011, 0.011, 0.22, K.steel, 8), 0, 0.012, 0, 0, 0, ROTZ), at(box(0.035, 0.005, 0.03, K.steel), 0.125, 0.012, 0), at(cyl(0.02, 0.02, 0.07, K.red, 10), -0.06, 0.02, 0, 0, 0, ROTZ)),
+  sledge: () => grp(at(cyl(0.016, 0.016, 0.3, K.wood, 10), 0, 0.03, 0, 0, 0, ROTZ), at(box(0.06, 0.06, 0.12, K.dgrey), 0.16, 0.03, 0)),
+  putty: () => grp(at(box(0.11, 0.022, 0.03, K.blue), -0.06, 0.012, 0), at(box(0.1, 0.002, 0.09, K.steel), 0.04, 0.003, 0)),
+  scraper: () => grp(at(cyl(0.014, 0.014, 1.1, K.wood, 10), 0, 0.02, 0, 0, 0, ROTZ), at(box(0.025, 0.004, 0.13, K.steel), 0.56, 0.02, 0)),
+  tub: () => { const g = grp(at(cyl(0.33, 0.27, 0.3, K.black, 28, true), 0, 0.15, 0), at(cyl(0.27, 0.27, 0.01, K.black, 28), 0, 0.005, 0), at(mesh(new THREE.TorusGeometry(0.33, 0.012, 6, 28), K.black), 0, 0.3, 0, ROTZ)); const f = at(mesh(new THREE.SphereGeometry(0.29, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M(0x9a8e7a, { roughness: 1 })), 0, 0.02, 0); f.scale.y = 0.001; g.add(f); g.userData.fill = f; return g; },
+  bucket: () => { const g = grp(at(cyl(0.155, 0.13, 0.3, K.black, 22, true), 0, 0.15, 0), at(cyl(0.13, 0.13, 0.01, K.black, 22), 0, 0.005, 0), at(mesh(new THREE.TorusGeometry(0.15, 0.004, 4, 20, Math.PI), K.steel), 0, 0.3, 0)); const f = at(cyl(0.145, 0.13, 0.01, M(0x9a8e7a, { roughness: 1 })), 0, 0.01, 0); f.visible = false; g.add(f); g.userData.fill = f; return g; },
+  shovel: () => grp(at(cyl(0.016, 0.016, 0.95, K.wood, 10), 0, 0.02, 0, 0, 0, ROTZ), at(box(0.08, 0.03, 0.12, K.black), -0.49, 0.02, 0), at(box(0.28, 0.01, 0.26, K.dgrey), 0.6, 0.012, 0)),
+  broom: () => grp(at(cyl(0.013, 0.013, 1.25, K.yellow, 10), 0, 0.03, 0, 0, 0, ROTZ), at(box(0.07, 0.045, 0.4, K.wood), 0.64, 0.05, 0), at(box(0.05, 0.05, 0.38, K.black), 0.66, 0.015, 0)),
+  vacuum: () => { const g = grp(at(cyl(0.19, 0.17, 0.42, K.yellow, 24), 0, 0.25, 0), at(cyl(0.2, 0.2, 0.1, K.black, 24), 0, 0.5, 0), at(box(0.12, 0.04, 0.04, K.black), 0, 0.57, 0)); [[0.13, 0.13], [-0.13, 0.13], [0.13, -0.13], [-0.13, -0.13]].forEach(([x, z]) => g.add(at(sph(0.03, K.black), x, 0.03, z))); const hose = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0.2, 0.45, 0), new V3(0.45, 0.35, 0.05), new V3(0.55, 0.1, 0.1), new V3(0.8, 0.03, 0.1)]), 30, 0.022, 8), K.black); g.add(hose, at(box(0.06, 0.02, 0.25, K.dgrey), 0.84, 0.012, 0.1)); return g; },
+  foil: () => { const g = grp(at(mesh(new THREE.PlaneGeometry(1.7, 1.4).rotateX(-Math.PI / 2), K.foil, false), 0, 0.003, 0)); g.add(at(cyl(0.05, 0.05, 0.5, K.foil), 0.6, 0.05, 0.5, ROTZ)); return g; },
+  dustdoor: () => { const g = grp(at(mesh(new THREE.PlaneGeometry(0.96, 2.02), K.foil, false), 0, 1.01, 0)); g.add(at(box(0.006, 1.9, 0.004, K.dgrey), 0, 0.98, 0.003)); g.add(at(box(0.08, 0.02, 0.006, K.dgrey), 0, 1.92, 0.004)); return g; },
+  goggles: () => grp(at(box(0.16, 0.05, 0.02, K.glass), 0, 0.03, 0), at(box(0.17, 0.012, 0.025, K.black), 0, 0.055, 0), at(mesh(new THREE.TorusGeometry(0.08, 0.004, 4, 20, Math.PI), K.black), 0, 0.03, -0.06, -ROTZ)),
+  earmuff: () => grp(at(mesh(new THREE.TorusGeometry(0.09, 0.008, 6, 20, Math.PI), K.red), 0, 0.09, 0), at(cyl(0.045, 0.045, 0.04, K.red), -0.09, 0.09, 0, 0, 0, ROTZ), at(cyl(0.045, 0.045, 0.04, K.red), 0.09, 0.09, 0, 0, 0, ROTZ)),
+  mask: () => { const m = at(mesh(new THREE.SphereGeometry(0.06, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), K.white), 0, 0, 0, ROTZ); m.scale.set(1, 0.8, 1.1); return grp(m, at(cyl(0.015, 0.015, 0.012, K.orange), 0.05, 0, 0, 0, 0, ROTZ)); },
+  gloves: () => { const g = new THREE.Group(); [-0.06, 0.06].forEach(z => { g.add(at(box(0.11, 0.025, 0.08, K.orange), 0, 0.013, z)); for (let i = 0; i < 4; i++) g.add(at(cyl(0.009, 0.009, 0.07, K.orange, 6), 0.09, 0.013, z - 0.03 + i * 0.02, 0, 0, ROTZ)); g.add(at(box(0.06, 0.02, 0.07, K.dgrey), -0.08, 0.012, z)); }); return g; },
+  boots: () => { const g = new THREE.Group(); [-0.07, 0.07].forEach(z => { g.add(at(box(0.28, 0.08, 0.1, K.black), 0, 0.04, z), at(box(0.1, 0.16, 0.09, K.black), -0.08, 0.12, z), at(box(0.05, 0.06, 0.1, K.yellow), 0.12, 0.035, z), at(box(0.29, 0.02, 0.105, K.rubber), 0, 0.01, z)); }); return g; },
+  tape: () => grp(at(cyl(0.04, 0.04, 0.04, K.yellow, 20), 0, 0.02, 0), at(box(0.03, 0.025, 0.04, K.black), 0.03, 0.02, 0), at(box(0.7, 0.001, 0.019, K.yellow), 0.4, 0.002, 0)),
+  folding: () => { const g = new THREE.Group(); for (let i = 0; i < 5; i++) g.add(at(box(0.2, 0.004, 0.017, K.yellow), i * 0.17, 0.004, (i % 2) * 0.09, 0, i % 2 ? 0.5 : -0.5)); return g; },
+  pencil: () => grp(at(cyl(0.0045, 0.0045, 0.17, K.red, 6), 0, 0.005, 0, 0, 0, ROTZ), at(mesh(new THREE.ConeGeometry(0.0045, 0.02, 6), K.wood), 0.095, 0.005, 0, 0, 0, -ROTZ)),
+  level: () => grp(at(box(0.8, 0.06, 0.025, K.alu), 0, 0.03, 0), at(box(0.05, 0.02, 0.027, M(0x58d68d, { transparent: true, opacity: 0.8 })), 0, 0.035, 0), at(box(0.02, 0.05, 0.027, M(0x58d68d, { transparent: true, opacity: 0.8 })), 0.3, 0.03, 0), at(box(0.8, 0.008, 0.027, K.red), 0, 0.055, 0)),
+  straightedge: () => grp(at(box(2.0, 0.1, 0.02, K.alu), 0, 0.05, 0), at(box(2.0, 0.006, 0.022, K.dgrey), 0, 0.003, 0)),
+  square: () => grp(at(box(0.4, 0.004, 0.035, K.steel), 0, 0.003, 0), at(box(0.035, 0.004, 0.3, K.steel), -0.18, 0.003, 0.15), at(box(0.06, 0.012, 0.04, K.red), -0.17, 0.008, 0.01)),
+  laser: () => { const g = new THREE.Group(); for (let i = 0; i < 3; i++) { const a = i * 2.09; g.add(at(cyl(0.008, 0.008, 1.1, K.black, 6), Math.cos(a) * 0.15, 0.52, Math.sin(a) * 0.15, Math.sin(a) * 0.27, 0, -Math.cos(a) * 0.27)); } g.add(at(cyl(0.035, 0.035, 0.06, K.dgrey), 0, 1.06, 0), at(box(0.1, 0.11, 0.1, K.green), 0, 1.15, 0), at(cyl(0.03, 0.03, 0.05, K.glass), 0, 1.23, 0)); return g; },
+  mortartub: () => { const g = grp(at(cyl(0.34, 0.29, 0.32, K.black, 28, true), 0, 0.16, 0), at(cyl(0.29, 0.29, 0.01, K.black, 28), 0, 0.005, 0), at(mesh(new THREE.TorusGeometry(0.34, 0.012, 6, 28), K.black), 0, 0.32, 0, ROTZ)); const f = at(cyl(0.325, 0.3, 0.01, M(0x9fa2a5, { roughness: 0.6 }), 28), 0, 0.15, 0); g.add(f); g.userData.fill = f; return g; },
+  mixer: () => { const g = new THREE.Group(); const p = grp(at(cyl(0.007, 0.007, 0.55, K.steel, 8), 0, 0.3, 0)); for (let i = 0; i < 2; i++) p.add(at(mesh(new THREE.TorusGeometry(0.055, 0.006, 6, 18), K.steel), 0, 0.06 + i * 0.07, 0, ROTZ + 0.5, i * 1.6)); g.add(p); g.userData.paddle = p; g.add(at(cyl(0.055, 0.055, 0.24, K.green), 0, 0.68, 0), at(box(0.5, 0.025, 0.025, K.black), 0, 0.74, 0), at(box(0.025, 0.06, 0.025, K.black), -0.24, 0.72, 0), at(box(0.025, 0.06, 0.025, K.black), 0.24, 0.72, 0)); return g; },
+  float: () => grp(at(box(0.28, 0.004, 0.12, K.steel), 0, 0.003, 0), at(box(0.16, 0.02, 0.03, K.wood), 0, 0.045, 0), at(box(0.02, 0.04, 0.02, K.dgrey), 0.06, 0.02, 0), at(box(0.02, 0.04, 0.02, K.dgrey), -0.06, 0.02, 0)),
+  plastertools: () => grp(at(box(0.28, 0.015, 0.14, K.white), 0, 0.008, 0), at(box(0.12, 0.035, 0.03, K.blue), 0, 0.035, 0), at(box(0.6, 0.012, 0.08, K.alu), 0.05, 0.006, 0.18)),
+  brush: () => grp(at(box(0.16, 0.012, 0.025, K.wood), 0, 0.01, 0), at(box(0.03, 0.02, 0.06, K.steel), 0.09, 0.012, 0), at(box(0.06, 0.016, 0.058, M(0xd9c7a1)), 0.13, 0.01, 0)),
+  roller: () => grp(at(cyl(0.035, 0.035, 0.2, M(0xf0ece0, { roughness: 1 })), 0.3, 0.035, 0, ROTZ), at(box(0.25, 0.008, 0.008, K.steel), 0.15, 0.04, -0.1), at(cyl(0.015, 0.015, 0.25, K.blue, 8), -0.1, 0.035, -0.1, 0, 0, ROTZ)),
+  tilecutter: () => { const g = grp(at(box(0.78, 0.035, 0.24, K.dgrey), 0, 0.02, 0), at(box(0.78, 0.01, 0.2, K.rubber), 0, 0.042, 0), at(cyl(0.012, 0.012, 0.8, K.steel), 0, 0.11, -0.08, 0, 0, ROTZ), at(box(0.04, 0.08, 0.04, K.dgrey), 0.38, 0.08, -0.08), at(box(0.04, 0.08, 0.04, K.dgrey), -0.38, 0.08, -0.08)); const h = grp(at(box(0.06, 0.05, 0.06, K.red), 0, 0, 0), at(cyl(0.012, 0.012, 0.3, K.black, 8), 0, 0.15, 0)); at(h, 0, 0.13, -0.08); g.add(h); g.userData.handle = h; const t = at(box(0.6, 0.008, 0.3, MAT_C.newWall), 0, 0.051, 0.03); g.add(t); g.userData.tile = t; return g; },
+  wetsaw: () => { const g = grp(at(box(0.62, 0.1, 0.42, K.blue), 0, 0.05, 0), at(box(0.58, 0.012, 0.38, K.alu), 0, 0.105, 0), at(box(0.18, 0.12, 0.16, K.dgrey), 0, 0.2, -0.18)); const b = at(cyl(0.09, 0.09, 0.003, K.steel, 28), 0, 0.15, 0, ROTZ, 0, 0); b.rotation.set(0, 0, 0); b.rotation.x = ROTZ; b.rotation.z = ROTZ; g.add(b); g.userData.blade = b; return g; },
+  notched: () => { const g = grp(at(box(0.28, 0.003, 0.12, K.steel), 0, 0.003, 0), at(box(0.16, 0.02, 0.03, K.wood), -0.02, 0.045, 0), at(box(0.02, 0.04, 0.02, K.dgrey), 0.04, 0.02, 0), at(box(0.02, 0.04, 0.02, K.dgrey), -0.08, 0.02, 0)); for (let i = 0; i < 10; i++) g.add(at(box(0.012, 0.003, 0.01, K.steel), -0.13 + i * 0.028, 0.003, 0.064)); return g; },
+  rubbermallet: () => grp(at(cyl(0.014, 0.014, 0.3, K.wood, 10), 0, 0.035, 0, 0, 0, ROTZ), at(cyl(0.035, 0.035, 0.12, K.white, 16), 0.16, 0.035, 0, ROTZ), at(cyl(0.036, 0.036, 0.04, K.black, 16), 0.16, 0.035, -0.045, ROTZ)),
+  nippers: () => grp(at(box(0.2, 0.008, 0.014, K.red), 0, 0.006, 0.02, 0, 0.18), at(box(0.2, 0.008, 0.014, K.red), 0, 0.006, -0.02, 0, -0.18), at(box(0.05, 0.012, 0.03, K.steel), 0.12, 0.006, 0)),
+  coredrill: () => { const g = new THREE.Group(); [0.022, 0.034, 0.05].forEach((r, i) => { g.add(at(cyl(r, r, 0.07, K.steel, 18, true), -0.12 + i * 0.12, r, 0, 0, 0, ROTZ), at(cyl(0.006, 0.006, 0.06, K.steel, 6), -0.12 + i * 0.12 - 0.065, r, 0, 0, 0, ROTZ)); }); return g; },
+  groutfloat: () => grp(at(box(0.24, 0.016, 0.1, K.rubberRed), 0, 0.008, 0), at(box(0.22, 0.006, 0.09, K.dgrey), 0, 0.019, 0), at(box(0.14, 0.022, 0.028, K.black), 0, 0.045, 0), at(box(0.02, 0.03, 0.02, K.black), 0.05, 0.03, 0), at(box(0.02, 0.03, 0.02, K.black), -0.05, 0.03, 0)),
+  sponge: () => grp(at(box(0.17, 0.05, 0.11, K.sponge), 0, 0.025, 0), at(box(0.17, 0.012, 0.11, M(0x2e86c1)), 0.0, 0.056, 0), at(box(0.17, 0.05, 0.11, K.sponge), 0.2, 0.025, 0.04, 0, 0.3)),
+  washset: () => { const g = grp(at(box(0.5, 0.24, 0.32, K.grey), 0, 0.12, 0), at(box(0.46, 0.01, 0.28, M(0x6e9fbf, { transparent: true, opacity: 0.8 })), 0, 0.2, 0)); [0.08, -0.08].forEach(z => g.add(at(cyl(0.035, 0.035, 0.26, K.dgrey, 12), 0.1, 0.25, z, ROTZ, ROTZ, 0))); g.add(at(box(0.3, 0.03, 0.14, K.sponge), -0.05, 0.27, 0.0)); return g; },
+  spacers: () => { const g = grp(at(box(0.14, 0.03, 0.1, K.glass), 0, 0.015, 0)); for (let i = 0; i < 8; i++) { const x = -0.05 + (i % 4) * 0.033, z = i < 4 ? -0.025 : 0.025; g.add(at(box(0.022, 0.004, 0.005, K.white), x, 0.033, z), at(box(0.005, 0.004, 0.022, K.white), x, 0.033, z)); } return g; },
+  clips: () => { const g = grp(at(box(0.16, 0.04, 0.12, K.glass), 0, 0.02, 0)); for (let i = 0; i < 6; i++) g.add(at(box(0.035, 0.014, 0.035, K.red), -0.05 + (i % 3) * 0.05, 0.045, i < 3 ? -0.03 : 0.03, 0, i)); return g; },
+  kneepads: () => { const g = new THREE.Group(); [-0.08, 0.08].forEach(z => { const p = at(sph(0.08, K.black), 0, 0.035, z); p.scale.set(1.25, 0.45, 0.95); g.add(p, at(box(0.03, 0.01, 0.2, K.dgrey), 0, 0.02, z)); }); return g; },
+  caulkgun: () => grp(at(box(0.26, 0.012, 0.012, K.steel), 0, 0.06, 0), at(cyl(0.025, 0.025, 0.21, K.white, 14), 0.02, 0.035, 0, 0, 0, ROTZ), at(mesh(new THREE.ConeGeometry(0.01, 0.07, 10), K.white), 0.16, 0.035, 0, 0, 0, -ROTZ), at(box(0.04, 0.1, 0.02, K.red), -0.14, 0.02, 0, 0, 0, 0.3), at(box(0.03, 0.08, 0.018, K.dgrey), -0.1, 0.0, 0, 0, 0, 0.5)),
+  siltool: () => grp(at(box(0.09, 0.004, 0.06, K.blue), 0, 0.002, 0, 0, 0.4), at(box(0.09, 0.004, 0.06, K.orange), 0.1, 0.002, 0.02, 0, -0.3), at(box(0.07, 0.004, 0.05, K.green), 0.05, 0.002, -0.07)),
+  cutter: () => grp(at(box(0.14, 0.018, 0.024, K.yellow), 0, 0.01, 0), at(box(0.05, 0.004, 0.014, K.steel), 0.09, 0.01, 0), at(box(0.03, 0.006, 0.01, K.black), 0.0, 0.021, 0)),
+  wrench: () => grp(at(box(0.32, 0.012, 0.03, K.steel), 0, 0.008, 0), at(box(0.04, 0.012, 0.08, K.steel), 0.17, 0.008, 0.02), at(box(0.035, 0.012, 0.025, K.steel), 0.17, 0.008, -0.04), at(box(0.12, 0.016, 0.034, K.red), -0.1, 0.009, 0))
+};
+
+/* ---------- Baustoff-Modelle ---------- */
+function sack(col, band, label) {
+  const g = grp(at(box(0.42, 0.08, 0.6, M(col, { roughness: 0.95 })), 0, 0.045, 0));
+  const top = at(sph(0.25, M(col, { roughness: 0.95 })), 0, 0.075, 0); top.scale.set(0.82, 0.13, 1.18); g.add(top);
+  if (band) g.add(at(box(0.425, 0.06, 0.12, M(band)), 0, 0.05, -0.1));
+  if (label) g.add(at(box(0.2, 0.002, 0.14, M(label)), 0, 0.105, 0.12));
+  return g;
+}
+function pail(r, h, col, lid) { return grp(at(cyl(r, r * 0.92, h, M(col, { roughness: 0.6 }), 20), 0, h / 2, 0), at(cyl(r * 1.04, r * 1.04, 0.025, M(lid, { roughness: 0.5 }), 20), 0, h, 0)); }
+function carton(w, h, d, stripe) { return grp(at(box(w, h, d, K.card), 0, h / 2, 0), at(box(w + 0.002, h * 0.3, d + 0.002, M(stripe)), 0, h / 2, 0)); }
+const MATBUILD = {
+  wandfliesen: () => { const g = new THREE.Group(), items = []; [-0.33, 0.33].forEach(x => { for (let i = 0; i < 6; i++) { const c = at(carton(0.62, 0.075, 0.32, 0xd5d2cb), x, i * 0.077, 0); g.add(c); items.push(c); } }); return { g, items, pos: [-1.42, 1.38, 0] }; },
+  bodenfliesen: () => { const g = new THREE.Group(), items = []; for (let i = 0; i < 7; i++) { const c = at(carton(0.62, 0.06, 0.62, 0x5d5b58), 0, i * 0.062, 0); g.add(c); items.push(c); } return { g, items, pos: [-0.45, 1.22, 0] }; },
+  flexkleber: () => { const g = new THREE.Group(), items = []; for (let i = 0; i < 7; i++) { const s = at(sack(0xe8e8e8, 0x2f6fd2, 0x9aa3ab), i < 4 ? 0 : 0.0, (i % 4) * 0.105, i < 4 ? 0 : -0.68, 0, (i % 2) * 0.08); g.add(s); items.push(s); } return { g, items, pos: [-1.8, 0.55, 0] }; },
+  tiefengrund: () => { const g = pail(0.13, 0.28, 0xf2f2f2, 0x2f6fd2); g.add(at(box(0.16, 0.12, 0.002, M(0x2f6fd2)), 0, 0.14, 0.13)); return { g, items: [g], pos: [-0.45, 1.3, 0] }; },
+  rotband: () => { const g = new THREE.Group(), items = []; for (let i = 0; i < 2; i++) { const s = at(sack(0xf4f1ec, 0xc0392b, 0xc0392b), 0, i * 0.105, 0); g.add(s); items.push(s); } return { g, items, pos: [-1.65, 1.25, ROTZ] }; },
+  repmoertel: () => { const s = sack(0xa9adb1, 0xf2c40f); return { g: s, items: [s], pos: [-0.95, 1.28, ROTZ] }; },
+  ausgleich: () => { const g = new THREE.Group(), items = []; for (let i = 0; i < 3; i++) { const s = at(sack(0xd9c8a0, 0x34495e), i * 0.5, 0, 0); g.add(s); items.push(s); } return { g, items, pos: [-1.65, 1.28, ROTZ] }; },
+  abdichtset: () => { const g = grp(pail(0.15, 0.3, 0xf2f2f2, 0x23a3a8), at(carton(0.3, 0.12, 0.2, 0x23a3a8), 0.32, 0, 0)); return { g, items: [g], pos: [-1.65, 1.3, 0] }; },
+  dichtband: () => { const g = grp(at(carton(0.36, 0.14, 0.26, 0x8fb3c7), 0, 0, 0), at(cyl(0.07, 0.07, 0.12, MAT_C.band, 20), 0, 0.2, 0, ROTZ)); return { g, items: [g], pos: [-0.95, 1.3, 0] }; },
+  fugenmoertel: () => { const g = new THREE.Group(), items = [], ghosts = []; for (let i = 0; i < 5; i++) { const p = at(pail(0.1, 0.17, 0xf5f5f5, 0x7f8c8d), i * 0.24, 0, 0); if (i >= 3) { p.traverse(o => { if (o.isMesh) o.material = K.ghost; }); ghosts.push(p); } else items.push(p); g.add(p); } return { g, items, ghosts, pos: [-1.85, 1.35, 0] }; },
+  silikon: () => { const g = new THREE.Group(), items = [], ghosts = []; for (let i = 0; i < 4; i++) { const c = grp(at(cyl(0.024, 0.024, 0.21, K.white, 14), 0, 0.024, 0, 0, 0, ROTZ), at(mesh(new THREE.ConeGeometry(0.008, 0.08, 8), K.white), 0.14, 0.024, 0, 0, 0, -ROTZ)); at(c, 0, 0, i * 0.065); if (i >= 2) { c.traverse(o => { if (o.isMesh) o.material = K.ghost; }); ghosts.push(c); } else items.push(c); g.add(c); } return { g, items, ghosts, pos: [-0.65, 1.25, 0] }; },
+  profile: () => { const g = new THREE.Group(); for (let i = 0; i < 6; i++) g.add(at(box(0.012, 2.4, 0.016, MAT_C.profile), (i % 3) * 0.02, 1.2, Math.floor(i / 3) * 0.02)); g.children.forEach(c => c.rotation.x = 0.12); g.add(at(carton(0.25, 0.1, 0.18, 0x7f8c8d), 0.25, 0, 0.05)); return { g, items: [g], pos: [0.45, 1.33, 0] }; },
+  armatur: () => { const g = carton(0.5, 0.12, 0.32, 0x95a5a6); g.add(at(box(0.3, 0.002, 0.18, MAT_C.chrome), 0, 0.122, 0)); return { g, items: [g], pos: [-0.6, 1.15, 0.2] }; }
+};
+
+/* ---------- Duscharmaturen (alt / neu) ---------- */
+function buildFixtures() {
+  const w = WALLS[0], sMid = (PIPE_S[0] + PIPE_S[1]) / 2;
+  const old = new THREE.Group();
+  old.add(at(cyl(0.024, 0.024, 0.2, MAT_C.chromeOld), 0, 0, 0.07, 0, 0, ROTZ), at(cyl(0.022, 0.022, 0.035, M(0xd8cfb5)), -0.11, 0, 0.07, 0, 0, ROTZ), at(cyl(0.022, 0.022, 0.035, M(0xd8cfb5)), 0.11, 0, 0.07, 0, 0, ROTZ), at(cyl(0.012, 0.012, 0.06, MAT_C.chromeOld), 0, -0.04, 0.07));
+  PIPE_S.forEach(s => old.add(at(cyl(0.01, 0.01, 0.07, MAT_C.chromeOld), s - sMid, 0, 0.035, Math.PI / 2)));
+  old.add(at(cyl(0.01, 0.01, 0.6, MAT_C.chromeOld), 0.25, 0.65, 0.04), at(cyl(0.05, 0.035, 0.08, MAT_C.chromeOld), 0.25, 0.85, 0.08, 0.9));
+  old.position.copy(wp(w, sMid, PIPE_Y, 0.012)); old.rotation.y = w.ry; wallGroups[0].add(old); LAY.oldFix = old;
+  // neue Aufputz-Brausebatterie + Brausestange + Handbrause
+  const nw = new THREE.Group();
+  const body = grp(at(cyl(0.028, 0.028, 0.26, MAT_C.chrome, 24), 0, 0, 0.08, 0, 0, ROTZ), at(cyl(0.03, 0.03, 0.04, MAT_C.chrome, 24), -0.13, 0, 0.08, 0, 0, ROTZ), at(box(0.016, 0.08, 0.016, MAT_C.chrome), 0.15, 0.035, 0.08, 0, 0, 0.3), at(cyl(0.011, 0.011, 0.05, MAT_C.chrome), 0, -0.045, 0.08));
+  PIPE_S.forEach(s => body.add(at(cyl(0.011, 0.011, 0.07, MAT_C.chrome), s - sMid, 0, 0.04, Math.PI / 2), at(cyl(0.03, 0.03, 0.008, MAT_C.chrome, 20), s - sMid, 0, 0.02, Math.PI / 2)));
+  const rod = grp(at(cyl(0.012, 0.012, 0.75, MAT_C.chrome), 0, 0.375, 0.05), at(box(0.03, 0.03, 0.05, MAT_C.chrome), 0, 0.02, 0.025), at(box(0.03, 0.03, 0.05, MAT_C.chrome), 0, 0.73, 0.025), at(box(0.04, 0.05, 0.04, MAT_C.chrome), 0, 0.55, 0.06));
+  rod.position.set(0.02, 0.3, 0);
+  const hand = grp(at(cyl(0.016, 0.012, 0.2, MAT_C.chrome), 0, -0.08, 0), at(cyl(0.055, 0.055, 0.025, MAT_C.chrome, 24), 0, 0.04, 0.02, 1.25));
+  hand.position.set(0.02, 0.88, 0.1); hand.rotation.x = -0.25;
+  const hose = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0, -0.07, 0.08), new V3(0.02, -0.3, 0.14), new V3(0.08, -0.25, 0.16), new V3(0.04, 0.3, 0.13), new V3(0.02, 0.7, 0.1)]), 40, 0.007, 6), MAT_C.chrome);
+  nw.add(body, rod, hand, hose); nw.userData = { body, rod, hand, hose };
+  nw.position.copy(wp(w, sMid, PIPE_Y, 0.016)); nw.rotation.y = w.ry; wallGroups[0].add(nw); LAY.newFix = nw;
+}
+
+/* ---------- Werkzeuge & Material in die Szene ---------- */
+let kitRoot;
+const LEAN = { richtlatte: 1, wasserwaage: 1, schaufel: 1, besen: 1, schaber: 1 };
+const TUB_POS = new V3(0.75, 0, 0.72), KUEBEL_POS = new V3(0.55, 0, -0.15);
+const PSA_W = WALLS[1];
+function centerModel(m) {
+  const b = new THREE.Box3().setFromObject(m), c = b.getCenter(new V3());
+  m.position.x -= c.x; m.position.z -= c.z; m.position.y -= b.min.y;
+  const piv = new THREE.Group(); piv.add(m); return { piv, size: b.getSize(new V3()) };
+}
+function poseQ(rx, ry, rz) { return new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)); }
+function P(p, q) { return { p, q: q || new THREE.Quaternion() }; }
+
+function buildKit3D() {
+  kitRoot = new THREE.Group(); scene.add(kitRoot);
+  TOOLS.forEach(t => {
+    const m = MODELS[t.model](); m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    const { piv, size } = centerModel(m); t.obj = piv; t.inner = m; t.size = size;
+    piv.userData.rp = new V3(); piv.userData.rq = new THREE.Quaternion(); piv.scale.setScalar(0.001);
+    kitRoot.add(piv);
+  });
+  // PSA-Ablage (Brett über der Fliesenkante)
+  LAY.psaShelf = box(0.95, 0.025, 0.2, K.wood); LAY.psaShelf.position.copy(wp(PSA_W, 2.68, 1.41, 0.1)); LAY.psaShelf.rotation.y = PSA_W.ry; root.add(LAY.psaShelf);
+  MATS.forEach(mt => {
+    const b = MATBUILD[mt.key](); b.g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    const piv = new THREE.Group(); piv.add(b.g); mt.obj = piv; mt.items = b.items; mt.ghosts = b.ghosts || [];
+    mt.home = P(new V3(b.pos[0], 0, b.pos[1]), poseQ(0, b.pos[2], 0));
+    const bb = new THREE.Box3().setFromObject(b.g); mt.size = bb.getSize(new V3()); mt.off = bb.getCenter(new V3());
+    piv.userData.rp = new V3(); piv.userData.rq = new THREE.Quaternion(); piv.scale.setScalar(0.001);
+    kitRoot.add(piv);
+  });
+}
+
+/* feste Positionen: Folie im Flur, Staubschutz in der Tür, PSA auf dem Brett */
+function fixedPose(key) {
+  const sh = s => wp(PSA_W, s, 1.425, 0.1), ry = PSA_W.ry, wf = WALLS[2];
+  switch (key) {
+    case 'folie': return P(new V3(1.3, 0.006, Z1 + 0.9));
+    case 'staubschutz': return P(wp(wf, (DOOR.s0 + DOOR.s1) / 2, 0, -0.03), poseQ(0, wf.ry, 0));
+    case 'brille': return P(sh(2.3), poseQ(0, ry, 0));
+    case 'gehoer': return P(sh(2.53), poseQ(0, ry, 0));
+    case 'atem': return P(sh(2.75), poseQ(0, ry, 0));
+    case 'handschuhe': return P(sh(2.98), poseQ(0, ry, 0));
+    case 'schuhe': return P(wp(PSA_W, 2.75, 0, 0.14), poseQ(0, ry, 0));
+    case 'laser': return P(new V3(0.15, 0, 0.05));
+    case 'kuebel': return P(KUEBEL_POS.clone());
+    case 'ruehrwerk': return P(KUEBEL_POS.clone().setY(0.02), poseQ(0, 0, 0.12));
+    case 'schuttwanne': return P(TUB_POS.clone());
+  }
+  return null;
+}
+
+/* automatische Werkzeug-Ablage pro Schritt (rechte Wand) */
+const layoutCache = {};
+function layoutFor(ph) {
+  if (layoutCache[ph]) return layoutCache[ph];
+  const out = {}, lean = [], flat = [];
+  TOOLS.forEach(t => { if (!t.ph.includes(ph) || fixedPose(t.key)) return; (LEAN[t.key] ? lean : flat).push(t); });
+  lean.forEach((t, i) => {
+    const L = t.size.x, a = 0.13, z = -1.42 + i * 0.1;
+    out[t.key] = P(new V3(X1 - 0.05 - (L / 2) * Math.sin(a) - t.size.y, (L / 2) * Math.cos(a), z), poseQ(0, 0, Math.PI / 2 - a));
+    out[t.key].lean = true;
+  });
+  let z = lean.length ? -1.32 + lean.length * 0.1 : -1.38, xEnd = X1 - 0.17, rowMax = 0;
+  flat.sort((a, b) => b.size.x - a.size.x).forEach(t => {
+    const dz = t.size.z + 0.08;
+    if (z + dz > 0.62) { xEnd -= rowMax + 0.1; z = -1.38; rowMax = 0; }
+    out[t.key] = P(new V3(xEnd - t.size.x / 2, 0, z + dz / 2)); z += dz; rowMax = Math.max(rowMax, t.size.x);
+  });
+  return (layoutCache[ph] = out);
+}
+
+/* ---------- 3D-Inventar (alle Werkzeuge Blatt 2 + Baustoffe Blatt 3) ---------- */
+const INV = { rows: [], center: new V3(0, 0, 0), w: 0, d: 0 };
+function buildInventory() {
+  invRoot = new THREE.Group(); invRoot.visible = false; scene.add(invRoot);
+  const rows = CATS.map((c, i) => ({ title: c, items: TOOLS.filter(t => t.cat === i) }));
+  rows.push({ title: 'Baustoffe (Blatt 3)', items: MATS.slice(0, 7), mat: true }, { title: 'Baustoffe (Blatt 3)', items: MATS.slice(7), mat: true });
+  let z = 0;
+  rows.forEach(r => {
+    const dims = r.items.map(it => { const s = it.size; return it.key === 'staubschutz' ? new V3(s.x, s.z, s.y) : s; });
+    const gap = 0.5, width = dims.reduce((a, s) => a + s.x + gap, -gap), depth = Math.max(...dims.map(s => s.z));
+    let x = -width / 2;
+    r.items.forEach((it, i) => {
+      const s = dims[i], q = it.key === 'staubschutz' ? poseQ(-Math.PI / 2, 0, 0) : new THREE.Quaternion();
+      const p = new V3(x + s.x / 2, 0.02, z + depth / 2);
+      if (it.key === 'staubschutz') p.z -= s.z / 2;
+      it.inv = P(p, q); it.invI = i; x += s.x + gap;
+    });
+    r.z = z + depth / 2; r.x0 = -width / 2; INV.rows.push(r); z += depth + 0.55; INV.w = Math.max(INV.w, width);
+  });
+  INV.d = z; INV.center.set(0, 0, z / 2);
+  // Ausstellungsfläche
+  const plat = box(INV.w + 2.4, 0.06, INV.d + 1.2, M(0x23292f, { roughness: 0.9 })); plat.position.set(0, -0.03, INV.d / 2 - 0.25); invRoot.add(plat);
+  const grid = new THREE.GridHelper(Math.max(INV.w + 2.4, INV.d + 1.2), 36, 0x55606a, 0x343c44); grid.position.set(0, 0.002, INV.d / 2 - 0.25); invRoot.add(grid);
+  INV.rows.forEach(r => { const st = box(0.06, 0.004, Math.max(0.3, 0.2), M(0xffd700)); st.position.set(r.x0 - 0.35, 0.004, r.z); invRoot.add(st); });
+  // Materialposition im Inventar: Modelle sind um ihren eigenen Ursprung gebaut → Versatz ausgleichen
+  MATS.forEach(m => { m.inv.p.x -= m.off.x; m.inv.p.z -= m.off.z; });
+}
+
+/* ---------- Zustand pro Bild: alles ergibt sich aus Schritt + Fortschritt ---------- */
+const UP = new V3(0, 1, 0), WALL_ORDER = [0, 3, 1, 2];
+const yawIn = n => Math.atan2(n.z, -n.x);                     // lokales +x zeigt in die Wand
+const qWallFlat = (w, roll = 0) => poseQ(0, w.ry, 0).multiply(poseQ(Math.PI / 2, 0, 0)).multiply(poseQ(0, roll, 0)); // flaches Werkzeug an der Wand
+const uDir = w => w.u;
+function computeUW() {
+  PHASES.forEach((ph, p) => {
+    if (p < S.phase) { S.U[p] = 1; S.W[p] = 1; }
+    else if (p > S.phase) { S.U[p] = 0; S.W[p] = 0; }
+    else if (!ph.dur) { S.U[p] = 1; S.W[p] = 1; }
+    else { S.U[p] = clamp(S.t / ph.dur); S.W[p] = ph.wait ? clamp((S.t - ph.dur) / WAIT_SEC) : (S.U[p] >= 1 ? 1 : 0); }
+  });
+}
+function phaseLen(p) { const ph = PHASES[p]; return ph.dur ? ph.dur + (ph.wait ? WAIT_SEC : 0) : 0; }
+function floorTop() { const U = S.U; return U[7] >= 0.42 ? 0.019 : U[5] >= 0.9 ? 0.005 : (U[2] >= 0.75 ? 0 : 0.012); }
+function simHours() { let h = 0; PHASES.forEach((ph, p) => { const mid = (ph.work[0] + ph.work[1]) / 2; h += mid * S.U[p] + (ph.wait ? ph.wait.h * S.W[p] : 0); }); return h; }
+function lastIdx(arr, key, u) { let lo = 0, hi = arr.length - 1, r = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m][key] <= u) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+
+/* ---------- alte Fliesen: abstemmen → fallen → in die Schuttwanne ---------- */
+let lastOld = null, lastNew = null;
+function updOldTiles() {
+  const u2 = S.U[2], u3 = S.U[3], key = u2 + ':' + u3 + ':' + S.phase;
+  if (key === lastOld) return; lastOld = key;
+  const d2 = PHASES[2].dur, d3 = PHASES[3].dur, tub = TUB_POS.clone().setY(0.25);
+  LAY.old.forEach(set => {
+    set.recs.forEach((rc, i) => {
+      let p = rc.pos, q = rc.quat, sc = rc.scl0;
+      if (u2 <= rc.tr) {
+        if (rc.loose) { p = _p.copy(rc.pos).addScaledVector(rc.w.n, 0.01); q = _q.copy(rc.quat).multiply(poseQ(0.09, 0, 0)); }
+      } else {
+        const k = clamp((u2 - rc.tr) * d2 / 0.75), e = ease(k);
+        p = _p.copy(rc.pos).lerp(rc.land, rc.wi >= 0 ? k : e); if (rc.wi >= 0) p.y = lerp(rc.pos.y, rc.land.y, k * k);
+        q = _q.copy(rc.quat).slerp(rc.landQ, e);
+        if (u3 > rc.tc) {
+          const k2 = clamp((u3 - rc.tc) * d3 / 0.6);
+          p = _p.copy(rc.land).lerp(tub, k2); p.y += Math.sin(k2 * Math.PI) * 0.45;
+          sc = _s.copy(rc.scl0).multiplyScalar(k2 >= 1 ? 0 : 1 - k2 * 0.4);
         }
+      }
+      set.im.setMatrixAt(i, _m.compose(p, q, sc));
+    });
+    set.im.instanceMatrix.needsUpdate = true;
+  });
+}
+/* ---------- neue Fliesen: Kleber aufziehen → Fliese einlegen ---------- */
+function updNewTiles() {
+  const u7 = S.U[7], u8 = S.U[8], key = u7 + ':' + u8;
+  if (key === lastNew) return; lastNew = key;
+  const d7 = PHASES[7].dur, Z = new V3(0, 0, 0);
+  LAY.newSets.forEach(set => {
+    const n = set.wall ? set.wall.n : UP;
+    set.recs.forEach((rc, i) => {
+      const k = clamp((u7 - rc.t0) * d7 / 0.45), e = ease(k), g = seg(u7, rc.t0 - 0.014, rc.t0);
+      if (k <= 0) set.im.setMatrixAt(i, _m.compose(rc.pos, rc.quat, Z));
+      else { _p.copy(rc.pos).addScaledVector(n, 0.16 * (1 - e)); _q.copy(rc.startQ).slerp(rc.quat, e); set.im.setMatrixAt(i, _m.compose(_p, _q, rc.scl0)); }
+      const gr = set.g[i]; set.glue.setMatrixAt(i, _m.compose(gr.pos, gr.quat, g > 0 ? _s.copy(gr.scl).multiply(new V3(g, set.wall ? 1 : 1, set.wall ? 1 : g)) : Z));
+    });
+    set.im.instanceMatrix.needsUpdate = true; set.glue.instanceMatrix.needsUpdate = true;
+  });
+  [LAY.clips, LAY.spacers].forEach((c, ci) => {
+    c.recs.forEach((r, i) => { const on = u7 >= r.t0 && u8 < 0.01 + (i / c.recs.length) * 0.07; c.im.setMatrixAt(i, _m.compose(r.pos, r.quat, on ? r.scl : Z)); });
+    c.im.instanceMatrix.needsUpdate = true;
+  });
+}
 
-        // ПОЛНОЦЕННЫЙ АНИМАЦИОННЫЙ ЦИКЛ
-        function animateSim() {
-            requestAnimationFrame(animateSim);
+/* ---------- Schichten & Raum ---------- */
+const C_ = (a, b, t) => lin(a).lerp(lin(b), t);
+function updLayers(now) {
+  const U = S.U, W = S.W, p = S.phase;
+  updOldTiles(); updNewTiles();
+  LAY.residue.forEach((m, wi) => { m.visible = U[2] > 0; const k = WALL_ORDER.indexOf(wi); m.material.opacity = 1 - seg(U[3], 0.05 + k * 0.1, 0.15 + k * 0.1); });
+  LAY.residueF.visible = U[2] > 0.5; LAY.residueF.material.opacity = 1 - seg(U[3], 0.45, 0.65);
+  LAY.spots.forEach(sp => {
+    const k = seg(U[4], sp.t - 0.01, sp.t + 0.04);
+    sp.dmg.visible = U[2] > 0 && k < 1; sp.dmg.material.opacity = 1;
+    sp.patch.visible = k > 0; sp.patch.material.opacity = k; sp.patch.material.color.copy(sp.wet).lerp(sp.dry, W[4]);
+  });
+  // Tiefengrund
+  const primeOn = p === 5 && U[5] < 0.68;
+  MAT_C.tiefgrund.opacity = primeOn ? 0.5 * (1 - seg(U[5], 0.6, 0.68)) : 0;
+  LAY.prime.forEach((list, wi) => { const k = WALL_ORDER.indexOf(wi), cov = seg(U[5], 0.02 + k * 0.1, 0.12 + k * 0.1) * WALLS[wi].L; list.forEach(m => { const a = m.position.clone().sub(WALLS[wi].o).dot(WALLS[wi].u); m.scale.x = Math.max(0.0001, clamp(cov - a, 0, m.userData.len)); m.visible = primeOn && m.scale.x > 0.001; }); });
+  LAY.primeF.visible = primeOn && U[5] > 0.44; LAY.primeF.scale.x = Math.max(0.001, RW * seg(U[5], 0.44, 0.58));
+  // Bodenausgleich
+  const lr = 3.3 * ease(seg(U[5], 0.68, 0.95)); LAY.level.visible = lr > 0.01; LAY.level.scale.setScalar(Math.max(lr, 0.001));
+  MAT_C.leveling.roughness = lerp(0.06, 0.88, W[5]); MAT_C.leveling.color.copy(C_(0x5f6467, 0xa9adaf, W[5]));
+  // Abdichtung
+  const so = 0.55 * seg(U[6], 0.55, 0.72) + 0.4 * seg(U[6], 0.78, 0.95);
+  MAT_C.seal.opacity = so; MAT_C.seal.roughness = lerp(0.12, 0.8, W[6]); MAT_C.seal.color.copy(C_(0x1b86a8, 0x4fb0c9, W[6]));
+  LAY.seal.forEach(m => m.visible = so > 0.01);
+  LAY.band.forEach(m => { const t = m.userData.t, k = seg(U[6], 0.05 + t * 0.38, 0.05 + t * 0.38 + 0.05); m.visible = k > 0; m.scale.x = Math.max(0.001, m.userData.len * k); });
+  LAY.corners.forEach(m => { const k = seg(U[6], 0.42, 0.47); m.visible = k > 0; m.scale.setScalar(Math.max(k, 0.001)); });
+  LAY.cuffs.forEach(m => { const k = seg(U[6], 0.46, 0.52); m.visible = k > 0; m.scale.setScalar(Math.max(k, 0.001)); });
+  // Fugen
+  LAY.groutF.visible = U[8] > 0.1; LAY.groutF.scale.x = Math.max(0.001, RW * seg(U[8], 0.1, 0.35));
+  LAY.grout.forEach(m => { const k = WALL_ORDER.indexOf(m.userData.wi), c = seg(U[8], 0.35 + k * 0.065, 0.35 + (k + 1) * 0.065); m.visible = c > 0; m.scale.x = Math.max(0.001, m.userData.len * c); });
+  MAT_C.grout.color.copy(C_(0x8a8e90, 0xc2c5c6, W[8]));
+  LAY.sil.forEach(m => { const t = m.userData.t, k = seg(U[8], 0.65 + t * 0.28, 0.65 + t * 0.28 + 0.04); m.visible = k > 0; if (m.userData.vert) m.scale.y = Math.max(0.001, m.userData.len * k); else m.scale.x = Math.max(0.001, m.userData.len * k); });
+  LAY.prof.forEach((m, i) => { const k = seg(U[7], 0.88 + i * 0.008, 0.9 + i * 0.008); m.visible = k > 0; m.scale.set(Math.max(k, 0.001), 1, 1); });
+  // Aufmaß + Laser
+  const ov = p === 1 ? seg(U[1], 0.28, 0.4) * (1 - seg(U[1], 0.9, 1)) : 0;
+  MAT_C.ovYellow.opacity = 0.32 * ov; MAT_C.ovRed.opacity = 0.55 * ov; MAT_C.ovBlue.opacity = 0.28 * (p === 1 ? seg(U[1], 0.5, 0.62) * (1 - seg(U[1], 0.9, 1)) : 0);
+  const laserOn = (p === 1 && U[1] > 0.12 && U[1] < 0.92) || (p === 7 && U[7] < 0.1);
+  MAT_C.laser.opacity = laserOn ? 0.75 + 0.25 * Math.sin(now * 20) : 0; LAY.laser.forEach(l => l.visible = laserOn);
+  // alte Armatur raus, Rohrkappen, neue Armatur
+  const ko = seg(U[2], 0, 0.04); LAY.oldFix.visible = ko < 1; LAY.oldFix.position.copy(wp(WALLS[0], 0.55, PIPE_Y - ko * 0.9, 0.012 + ko * 0.25));
+  const f = LAY.newFix.userData, k1 = seg(U[9], 0.05, 0.3), k2 = seg(U[9], 0.32, 0.5), k3 = seg(U[9], 0.5, 0.64);
+  [[f.body, k1], [f.rod, k2], [f.hand, k3], [f.hose, k3]].forEach(([o, k]) => { o.visible = k > 0; o.scale.setScalar(Math.max(0.001, 0.6 + 0.4 * ease(k))); });
+  f.body.position.z = 0.12 * (1 - ease(k1));
+  LAY.pipes.forEach(pp => pp.children[1].visible = U[9] < 0.15);
+  // Ablauf liegt immer auf der aktuellen Bodenoberfläche
+  LAY.drain.position.y = U[7] >= 0.4 ? 0.0195 : U[5] >= 0.8 ? 0.0055 : U[2] >= 0.75 ? 0.002 : 0.0125;
+  LAY.psaShelf.visible = p >= 1 && p <= 10;
+  // Uhr + Tag/Nacht während der Trocknung
+  const h = simHours(); clockH.rotation.z = -h / 12 * Math.PI * 2; clockM.rotation.z = -h * Math.PI * 2;
+  const ph = PHASES[p], w = S.W[p], night = ph.wait && S.t > ph.dur ? Math.min(1, w * 5, (1 - w) * 5) : 0;
+  S.night = night;
+  spot.intensity = lerp(1.25, 0.06, night); lampMat.emissiveIntensity = lerp(1, 0.05, night);
+  hemi.intensity = lerp(lerp(0.62, 0.16, night), 1.05, S.invE || 0); hemi.color.copy(C_(0xffffff, 0x3b5aa8, night * (1 - (S.invE || 0))));
+}
 
-            // Плавное движение камеры
-            simCamera.position.lerp(targetCamPos, 0.05);
-            currentCamLook.lerp(targetCamLook, 0.05);
-            simCamera.lookAt(currentCamLook);
+/* ---------- Animationen der Werkzeuge ---------- */
+function oldFront() { const a = LAY.oldAll, i = clamp(Math.floor((S.U[2] - 0.04) / 0.88 * a.length), 0, a.length - 1); return a[i]; }
+function newOrder() { if (!LAY.newOrd) { LAY.newOrd = []; LAY.newSets.forEach(s => s.recs.forEach(r => { r.n = s.wall ? s.wall.n : UP; r.w = s.wall; LAY.newOrd.push(r); })); LAY.newOrd.sort((a, b) => a.t0 - b.t0); } return LAY.newOrd; }
+function perim(t, inset) { // Punkt auf dem Raumumfang (für Besen / Sauger)
+  const a = RW - 2 * inset, b = RD - 2 * inset, L = 2 * (a + b); let d = ((t % 1) + 1) % 1 * L;
+  if (d < a) return new V3(X0 + inset + d, 0, Z0 + inset); d -= a; if (d < b) return new V3(X1 - inset, 0, Z0 + inset + d); d -= b;
+  if (d < a) return new V3(X1 - inset - d, 0, Z1 - inset); d -= a; return new V3(X0 + inset, 0, Z1 - inset - d);
+}
+function wallSweep(u, a, step, now, d, yMid = 0.65, amp = 0.45) { const k = Math.floor((u - a) / step); if (k < 0 || k > 3) return null; const w = WALLS[WALL_ORDER[k]], s = seg(u, a + k * step, a + (k + 1) * step) * w.L; let ss = s; if (w.door && ss > DOOR.s0 - 0.1 && ss < DOOR.s1 + 0.1) ss = DOOR.s1 + 0.12; return { w, s: ss, pt: wp(w, ss, yMid + amp * Math.sin(now * 3.2), d) }; }
+const ANIM = {
+  bohrhammer(ph, u, now) { if (ph !== 2 || u < 0.03 || u > 0.94) return null; const r = oldFront(), v = 0.008 * Math.sin(now * 70);
+    if (r.wi >= 0) { const n = r.w.n; return P(r.pos.clone().addScaledVector(n, 0.44 + v).setY(Math.max(0.03, r.pos.y - 0.1)), poseQ(0, yawIn(n), 0)); }
+    return P(r.pos.clone().add(new V3(0.0, 0.44 + v, 0)), poseQ(0, 0.4, -Math.PI / 2)); },
+  handmeissel(ph, u, now) { if (ph !== 2 || u < 0.06 || u > 0.6) return null; const a = LAY.oldAll, r = a[clamp(Math.floor((u - 0.04) / 0.88 * a.length) - 30, 0, a.length - 1)]; if (r.wi < 0) return null; return P(r.pos.clone().addScaledVector(r.w.n, 0.12).setY(r.pos.y - 0.012), poseQ(0, yawIn(r.w.n), 0)); },
+  faeustel(ph, u, now) { if (ph !== 2 || u < 0.06 || u > 0.6) return null; const a = LAY.oldAll, r = a[clamp(Math.floor((u - 0.04) / 0.88 * a.length) - 30, 0, a.length - 1)]; if (r.wi < 0) return null; const sw = Math.max(0, Math.sin(now * 9)); return P(r.pos.clone().addScaledVector(r.w.n, 0.42 + 0.12 * sw).setY(r.pos.y - 0.04), poseQ(0, yawIn(r.w.n), 0.35 * sw)); },
+  schaber(ph, u, now) { if (ph !== 3 || u < 0.05 || u > 0.65) return null;
+    if (u < 0.45) { const s = wallSweep(u, 0.05, 0.1, now, 0, 0.62, 0.42); if (!s) return null; return P(s.pt.addScaledVector(s.w.n, 0.56), poseQ(0, yawIn(s.w.n), 0.25)); }
+    const k = seg(u, 0.45, 0.65); return P(new V3(lerp(X0 + 0.7, X1 - 0.8, k), 0.24, 0.9 * Math.sin(now * 2)), poseQ(0, 0, -0.42)); },
+  schaufel(ph, u, now) { if (ph !== 3 || u < 0.12 || u > 0.82) return null; const a = LAY.oldAll, i = lastIdx(LAY.byTc, 'tc', u), r = LAY.byTc[clamp(i + 1, 0, a.length - 1)]; const c = 0.5 + 0.5 * Math.sin(now * 3), p = r.land.clone().lerp(TUB_POS.clone().setY(0.42), c); p.y = Math.max(p.y, 0.05); return P(p, poseQ(0, Math.atan2(-(TUB_POS.z - r.land.z), TUB_POS.x - r.land.x), -0.25 + 0.3 * c)); },
+  schuttwanne(ph, u) { if (ph !== 3 || u < 0.86) return null; const k = seg(u, 0.86, 1), door = new V3(1.3, 0, 1.35), hall = new V3(1.3, 0, Z1 + 1.2); return P(k < 0.5 ? TUB_POS.clone().lerp(door, k * 2) : door.lerp(hall, k * 2 - 1)); },
+  besen(ph, u, now) { const on = (ph === 3 && u > 0.66 && u < 0.88) || (ph === 10 && u > 0.12 && u < 0.5); if (!on) return null; const k = ph === 3 ? seg(u, 0.66, 0.88) : seg(u, 0.12, 0.5); const bx = lerp(X0 + 0.5, X1 - 0.9, k), bz = 0.95 * Math.sin(k * 9) + 0.06 * Math.sin(now * 9); return P(new V3(bx - 0.34, 0.53, bz), poseQ(0, 0, -1.0)); },
+  sauger(ph, u, now) { const on = (ph === 3 && u > 0.72) || (ph === 10 && u > 0.32 && u < 0.78); if (!on) return null; const k = ph === 3 ? seg(u, 0.72, 1) : seg(u, 0.32, 0.78); const a = perim(k * 0.9, 0.62), b = perim(k * 0.9 + 0.01, 0.62); return P(a, poseQ(0, Math.atan2(-(b.z - a.z), b.x - a.x) + Math.PI, 0)); },
+  richtlatte(ph, u) { if (ph !== 4 || u > 0.2) return null; const w = WALLS[u < 0.1 ? 0 : 3], s = lerp(0.35, w.L - 0.35, seg(u, u < 0.1 ? 0 : 0.1, u < 0.1 ? 0.1 : 0.2)); return P(wp(w, s, 1.0, 0.035), poseQ(0, w.ry, Math.PI / 2)); },
+  wasserwaage(ph, u, now) {
+    if (ph === 4 && u > 0.03 && u < 0.2) return P(new V3(lerp(-1.5, 1.0, seg(u, 0.03, 0.2)), floorTop(), 0.2 * Math.sin(u * 30)), poseQ(0, u * 8, 0));
+    if (ph === 7 && u > 0.08 && u < 0.88) { const o = newOrder(), i = lastIdx(o, 't0', u) - 5; if (i < 0) return null; const r = o[i]; if (!r.w) return P(r.pos.clone().setY(0.021), poseQ(0, 0.6, 0)); return P(wp(r.w, (r.r.s0 + r.r.s1) / 2, r.r.y0 + 0.06, 0.03), poseQ(0, r.w.ry, 0)); }
+    return null; },
+  ruehrwerk(ph, u) { return null; },
+  glaettkelle(ph, u, now) {
+    if (ph === 4 && u > 0.18 && u < 0.9) { const i = lastIdx(LAY.spots, 't', u), sp = LAY.spots[clamp(i, 0, LAY.spots.length - 1)], m = 0.05;
+      if (sp.wi >= 0) return P(wp(sp.w, sp.s + m * Math.sin(now * 5), sp.y + m * Math.cos(now * 5), 0.006), qWallFlat(sp.w, 0.4));
+      return P(sp.pos.clone().add(new V3(m * Math.sin(now * 5), 0.005, m * Math.cos(now * 5))), poseQ(0, now % 6, 0)); }
+    if (ph === 5 && u > 0.74 && u < 0.97) { const r = 3.3 * ease(seg(u, 0.68, 0.95)) * 0.85, a = now * 0.8; return P(new V3(clamp(0.25 + Math.cos(a) * r, X0 + 0.2, X1 - 0.2), 0.008, clamp(0.15 + Math.sin(a) * r, Z0 + 0.2, Z1 - 0.2)), poseQ(0, a, 0)); }
+    return null; },
+  spachtel(ph, u, now) { if (ph !== 4 || u < 0.2 || u > 0.88) return null; const i = lastIdx(LAY.spots, 't', u) - 1; if (i < 0) return null; const sp = LAY.spots[i]; if (sp.wi < 0) return null; return P(wp(sp.w, sp.s + 0.04 * Math.sin(now * 7), sp.y, 0.006), qWallFlat(sp.w, -0.6)); },
+  kuebel(ph, u) { if (ph !== 5 || u < 0.68 || u > 0.82) return null; const k = Math.sin(seg(u, 0.68, 0.82) * Math.PI); return P(new V3(0.62, 0.12 * k, 0.15), poseQ(0, 0, 1.1 * k)); },
+  rolle(ph, u, now) {
+    if (ph === 5 && u > 0.02 && u < 0.58) { if (u < 0.42) { const s = wallSweep(u, 0.02, 0.1, now, 0, 0.66, 0.5); if (!s) return null; return P(s.pt.addScaledVector(s.w.n, 0.27), poseQ(0, yawIn(s.w.n), 0)); }
+      const k = seg(u, 0.44, 0.58); return P(new V3(lerp(X0 + 0.3, X1 - 0.3, k), 0.05, 1.2 * Math.sin(now * 2.5)), poseQ(0, Math.PI / 2, 0)); }
+    if (ph === 6 && u > 0.55 && u < 0.95) { const c = (seg(u, 0.55, 0.95) * 2) % 1;
+      if (c < 0.34) { const w = WALLS[0]; return P(wp(w, c / 0.34 * 1.0 + 0.05, 0.66 + 0.5 * Math.sin(now * 3.5), 0.27), poseQ(0, yawIn(w.n), 0)); }
+      if (c < 0.67) { const w = WALLS[3]; return P(wp(w, RD - 1.05 + (c - 0.34) / 0.33 * 1.0, 0.66 + 0.5 * Math.sin(now * 3.5), 0.27), poseQ(0, yawIn(w.n), 0)); }
+      return P(new V3(X0 + 0.15 + (c - 0.67) / 0.33 * 0.8, 0.05, Z0 + 0.55 + 0.35 * Math.sin(now * 3)), poseQ(0, Math.PI / 2, 0)); }
+    return null; },
+  pinsel(ph, u, now) {
+    if (ph === 5 && u > 0.02 && u < 0.42) { const s = wallSweep(u, 0.02, 0.1, now, 0, 0.2, 0.12); if (!s) return null; return P(s.pt.addScaledVector(s.w.n, 0.08).addScaledVector(s.w.u, -0.25), poseQ(0, yawIn(s.w.n), -0.6)); }
+    if (ph === 6 && u > 0.05 && u < 0.45) { const i = clamp(Math.floor((u - 0.05) / 0.38 * LAY.band.length), 0, LAY.band.length - 1), m = LAY.band[i], k = seg(u, 0.05 + m.userData.t * 0.38, 0.05 + m.userData.t * 0.38 + 0.05); const w = WALLS.find(ww => Math.abs(ww.ry - m.rotation.y) < 0.01) || WALLS[0]; const pt = m.position.clone().addScaledVector(w.u, m.userData.len * k); return P(pt.addScaledVector(w.n, 0.1).setY(0.1), poseQ(0, yawIn(w.n), -0.9)); }
+    return null; },
+  zahnkelle(ph, u, now) { if (ph !== 7 || u < 0.04 || u > 0.89) return null; const o = newOrder(), r = o[clamp(lastIdx(o, 't0', u) + 1, 0, o.length - 1)], sw = 0.1 * Math.sin(now * 6);
+    if (!r.w) return P(r.pos.clone().setY(0.012).add(new V3(sw, 0, 0)), poseQ(0, 0.3, 0)); return P(wp(r.w, (r.r.s0 + r.r.s1) / 2 + sw, (r.r.y0 + r.r.y1) / 2, 0.009), qWallFlat(r.w, 0.3)); },
+  gummihammer(ph, u, now) { if (ph !== 7 || u < 0.06 || u > 0.9) return null; const o = newOrder(), i = lastIdx(o, 't0', u - 0.004); if (i < 0) return null; const r = o[i], tap = 0.035 * Math.abs(Math.sin(now * 13));
+    if (!r.w) return P(r.pos.clone().setY(0.055 + tap), poseQ(0, 0.5, 0)); return P(r.pos.clone().addScaledVector(r.w.n, 0.06 + tap).setY(r.pos.y - 0.035), poseQ(0, r.w.ry + Math.PI / 2, 0)); },
+  bohrkrone(ph, u, now) { if (ph !== 7) return null; const tp = LAY.pipeT || 0.6; if (u < tp - 0.03 || u > tp + 0.012) return null; const w = WALLS[0]; return P(wp(w, PIPE_S[Math.floor(now * 1.5) % 2], PIPE_Y - 0.05, 0.12), poseQ(0, yawIn(w.n), 0).multiply(poseQ(now * 30, 0, 0))); },
+  fugbrett(ph, u, now) { return groutPath(ph === 8 ? u : -1, now, 0.02); },
+  schwamm(ph, u, now) {
+    if (ph === 8) return groutPath(u - 0.07, now, 0.03);
+    if (ph === 10 && u > 0.5 && u < 0.92) { const s = wallSweep(u, 0.5, 0.105, now, 0.02, 0.65, 0.5); if (!s) return null; return P(s.pt, qWallFlat(s.w, 0)); }
+    return null; },
+  kartusche(ph, u) { const b = beadTip(ph, u); if (!b) return null; const n = b.n; return P(b.pt.clone().addScaledVector(n, 0.13).add(new V3(0, 0.11, 0)), poseQ(0, yawIn(n), -0.7)); },
+  silikonwz(ph, u) { const b = beadTip(ph, u - 0.02); if (!b) return null; return P(b.pt.clone().addScaledVector(b.n, 0.03).add(new V3(0, 0.03, 0)), poseQ(0, yawIn(b.n), -0.8)); },
+  armschluessel(ph, u, now) { if (ph !== 9 || u < 0.08 || u > 0.52) return null; const w = WALLS[0];
+    const pt = u < 0.32 ? wp(w, PIPE_S[u < 0.2 ? 0 : 1], PIPE_Y, 0.05) : wp(w, 0.57, PIPE_Y + 0.32, 0.04);
+    const q = poseQ(0, w.ry, 0).multiply(poseQ(Math.PI / 2, 0, 0)).multiply(poseQ(0, 0.6 * Math.sin(now * 4), 0)); const dir = new V3(1, 0, 0).applyQuaternion(q); return P(pt.addScaledVector(dir, -0.16), q); }
+};
+function groutPath(u, now, d) {
+  if (u > 0.1 && u < 0.35) { const k = seg(u, 0.1, 0.35); return P(new V3(X0 + 0.1 + (RW - 0.2) * k, 0.021 + d * 0.2, 1.25 * Math.sin(now * 2.2)), poseQ(0, 0.7 + 0.3 * Math.sin(now * 4), 0)); }
+  if (u >= 0.35 && u < 0.61) { const s = wallSweep(u, 0.35, 0.065, now, d, 0.65, 0.5); if (!s) return null; return P(s.pt, qWallFlat(s.w, Math.PI / 4)); }
+  return null;
+}
+function beadTip(ph, u) {
+  if (ph !== 8 || u < 0.65 || u > 0.95) return null; const n = LAY.sil.length, i = clamp(Math.floor((u - 0.65) / 0.28 * n), 0, n - 1), m = LAY.sil[i], t = m.userData.t, k = seg(u, 0.65 + t * 0.28, 0.65 + t * 0.28 + 0.04);
+  if (m.userData.vert) { const diag = new V3(-Math.sign(m.position.x), 0, -Math.sign(m.position.z)).normalize(); return { pt: m.position.clone().add(new V3(0, m.userData.len * k, 0)), n: diag }; }
+  const w = m.userData.w; return { pt: m.position.clone().addScaledVector(w.u, m.userData.len * k), n: w.n };
+}
 
-            const time = Date.now() * 0.005;
+/* ---------- Werkzeuge & Material platzieren ---------- */
+function toolsActive(t, p) { return t.ph.includes(p); }
+function toolTarget(t, p, u, now) {
+  const a = ANIM[t.key] && ANIM[t.key](p, u, now); if (a) return a;
+  const f = fixedPose(t.key); if (f) { f.p.y += t.key === 'folie' || t.key === 'staubschutz' || t.key === 'brille' || t.key === 'gehoer' || t.key === 'atem' || t.key === 'handschuhe' ? 0 : floorTop(); return f; }
+  const ph = t.ph.includes(p) ? p : (t.ph.includes(p - 1) ? p - 1 : t.ph[0]);
+  const l = layoutFor(ph)[t.key]; const r = P(l.p.clone(), l.q.clone()); if (!l.lean) r.p.y += floorTop(); return r;
+}
+function place(obj, tg, vis, k, inv) {
+  const ud = obj.userData;
+  if (S.snap || !ud.init) { ud.rp.copy(tg.p); ud.rq.copy(tg.q); ud.init = true; } else { ud.rp.lerp(tg.p, k); ud.rq.slerp(tg.q, k); }
+  const e = S.invE;
+  obj.position.copy(ud.rp); obj.quaternion.copy(ud.rq);
+  if (e > 0 && inv) { obj.position.lerp(inv.p, e); obj.quaternion.slerp(inv.q, e); vis = lerp(vis, 1, e); }
+  obj.scale.setScalar(Math.max(0.001, vis)); obj.visible = vis > 0.01; ud.vis = vis;
+}
+function updKit(dt, now) {
+  const p = S.phase, u = S.U[p], k = 1 - Math.exp(-dt * 9), fin = S.U[p] >= 1 && S.W[p] >= 1;
+  const appear = ease(seg(u, 0, 0.05)) || (PHASES[p].dur ? 0 : 1);
+  TOOLS.forEach(t => {
+    const now_ = toolsActive(t, p), prev = toolsActive(t, p - 1);
+    let vis = now_ ? (prev ? 1 : appear) : (prev ? 1 - appear : 0);
+    if (p === 10 && now_ && !toolsActive(t, 11)) vis *= 1 - seg(u, 0.9, 1);
+    place(t.obj, toolTarget(t, p, u, now), vis, k, t.inv);
+    // Teil-Animationen
+    const ud = t.inner.userData;
+    if (ud.paddle) { const mix = (p === 4 && u < 0.16) || (p === 5 && u > 0.6 && u < 0.68) || (p === 7 && (u < 0.04 || Math.abs(u - 0.32) < 0.02 || Math.abs(u - 0.6) < 0.02)) || (p === 8 && u > 0.05 && u < 0.1); if (mix) ud.paddle.rotation.y = now * 30; }
+    if (ud.handle) { const c = (now * 0.5) % 1; ud.handle.position.x = p === 7 ? lerp(-0.34, 0.34, c) : 0; ud.handle.rotation.z = p === 7 ? -0.25 * Math.sin(c * Math.PI) : 0; }
+    if (ud.fill && t.key === 'kuebel') { const col = p === 4 ? 0xb09a92 : p === 5 ? 0x6b7073 : p === 7 ? 0x8e9092 : 0x9da1a3; ud.fill.material.color.copy(lin(col)); ud.fill.visible = p >= 4 && p <= 8; }
+    if (ud.fill && (t.key === 'schuttwanne' || t.key === 'eimer1')) { const f = p === 3 ? seg(u, 0.15, 0.85) : 0; if (t.key === 'schuttwanne') ud.fill.scale.y = Math.max(0.001, f * 0.9); else { ud.fill.visible = f > 0.05; ud.fill.position.y = 0.02 + f * 0.25; } }
+    if (ud.fill && t.key === 'eimer2') { ud.fill.visible = p >= 4 && p <= 8; ud.fill.position.y = 0.18; ud.fill.material.color.copy(lin(p === 6 ? 0x1b86a8 : p === 10 ? 0x9fc7d9 : 0xb7babc)); }
+  });
+  const ft = floorTop();
+  MATS.forEach(m => {
+    const on = m.ph === p, vis = on ? appear : 0;
+    const tg = P(m.home.p.clone().add(new V3(0, ft + (1 - vis) * 0.5, 0)), m.home.q.clone());
+    place(m.obj, tg, vis, 1, m.inv);
+    const used = on ? matUse(m.key, u) : 0, n = m.items.length, keep = S.invE > 0.5 ? n : n - Math.floor(used * n + 1e-6);
+    m.items.forEach((it, i) => it.visible = i < keep);
+  });
+}
+function matUse(key, u) {
+  switch (key) {
+    case 'rotband': return seg(u, 0.15, 0.62); case 'repmoertel': return seg(u, 0.62, 0.92);
+    case 'tiefengrund': return seg(u, 0.55, 0.62); case 'ausgleich': return seg(u, 0.66, 0.93);
+    case 'dichtband': return seg(u, 0.05, 0.53); case 'abdichtset': return seg(u, 0.55, 0.96);
+    case 'bodenfliesen': return seg(u, 0.05, 0.42); case 'wandfliesen': return seg(u, 0.46, 0.89); case 'flexkleber': return seg(u, 0.03, 0.9); case 'profile': return seg(u, 0.88, 0.99);
+    case 'fugenmoertel': return seg(u, 0.1, 0.62); case 'silikon': return seg(u, 0.65, 0.96); case 'armatur': return seg(u, 0.04, 0.06);
+  }
+  return 0;
+}
 
-            // Логика ремонта по шагам
-            if (currentSimStep >= 1) {
-                // Исчезает старая плитка
-                if (oldTileMaterial.opacity > 0) oldTileMaterial.opacity -= 0.02;
+/* ---------- Teilschritte (Text im HUD) ---------- */
+const SUBS = {
+  1: [[0, 'Arbeitsbereich mit Abdeckfolie & Staubschutz sichern'], [0.12, 'Höhe 1,30 m mit Laser / Schlagschnur anzeichnen'], [0.3, 'Wandfläche: 25,00 m × 1,30 m = 32,50 m²'], [0.48, 'Tür im Fliesenbereich: 0,90 × 1,30 m = −1,17 m² → 31,33 m²'], [0.64, 'Boden 13,40 m² → 44,73 m² + 10 % Verschnitt = 49,20 m²']],
+  2: [[0, 'Alte Duscharmatur abbauen'], [0.04, 'Wandfliesen mit Bohrhammer, Meißel & Fäustel abstemmen'], [0.3, 'Dabei werden Wände und Betonboden beschädigt'], [0.71, 'Bodenfliesen abstemmen']],
+  3: [[0, 'Kleberreste abschaben (Schaber, Spachtel)'], [0.12, 'Schutt sortieren & in die Schuttwanne schaufeln'], [0.66, 'Fegen & saugen'], [0.86, 'Schutt entsorgen (Entsorgung ≈ 100–750 € oder mehr)']],
+  4: [[0, 'Mörtel anrühren · Untergrund mit Richtlatte & Wasserwaage prüfen'], [0.2, 'Wände mit Rotband-Reparaturputz ausbessern'], [0.66, 'Betonboden mit Reparaturmörtel ausbessern']],
+  5: [[0, 'Tiefengrund an den Wänden auftragen (Rolle & Pinsel)'], [0.44, 'Tiefengrund auf dem Boden auftragen'], [0.6, 'Tiefengrund trocknen lassen (lt. Datenblatt)'], [0.64, 'Bodenausgleichsmasse anrühren & ausgießen']],
+  6: [[0, 'Dichtband zuschneiden & in die Anschlussfugen einbetten'], [0.42, 'Dichtecken & Manschetten (Rohre, Ablauf) setzen'], [0.55, '1. Schicht Abdichtung im Duschbereich'], [0.76, '2. Schicht Abdichtung']],
+  7: [[0, 'Höhe 1,30 m per Laser prüfen · Flexkleber anrühren'], [0.05, 'Bodenfliesen verlegen – von hinten zur Tür'], [0.46, 'Wandfliesen verlegen · Zuschnitte · Löcher für die Anschlüsse'], [0.88, 'Abschlussprofile an der 1,30 m-Kante']],
+  8: [[0, 'Nivellierclips & Abstandshalter entfernen · Fugenmörtel anrühren'], [0.1, 'Boden verfugen'], [0.35, 'Wände verfugen & mit Waschset abwaschen'], [0.65, 'Sanitärsilikon in Anschluss- & Bewegungsfugen']],
+  9: [[0, 'Duscharmatur auspacken'], [0.05, 'Brausebatterie an die Anschlüsse montieren'], [0.32, 'Brausestange & Handbrause montieren'], [0.68, 'Anschlüsse mit Wasser prüfen']],
+  10: [[0, 'Abdeckfolien & Staubschutz entfernen'], [0.12, 'Fegen, saugen, Fliesen abwischen'], [0.9, 'Werkzeug wegräumen']]
+};
+const CAMS = { // zusätzliche Kamerafahrten innerhalb eines Schritts: [u, pos, blick]
+  1: [[0.45, null], [0.56, [0.15, 1.6, -0.75, 1.3, 0.75, 1.6]], [0.6, [0.15, 1.6, -0.75, 1.3, 0.75, 1.6]], [0.7, [1.6, 2.15, 1.35, -0.4, 0, -0.3]]],
+  2: [[0.66, null], [0.76, [1.5, 1.9, 1.25, -0.6, 0.0, -0.5]]],
+  3: [[0.84, null], [0.9, [-0.4, 1.6, -0.7, 1.3, 0.6, 1.6]]],
+  7: [[0, [1.55, 1.95, 1.25, -0.6, 0.0, -0.5]], [0.42, [1.55, 1.95, 1.25, -0.6, 0.0, -0.5]], [0.5, null]],
+  9: [[0.66, null], [0.72, [0.15, 1.35, 0.05, -1.55, 0.9, -1.45]]]
+};
+function camFor(p, u) {
+  const base = PHASES[p].cam, list = CAMS[p]; if (!list) return base;
+  const pts = (list[0][0] === 0 ? [] : [[0, base]]).concat(list.map(([t, c]) => [t, c || base]));
+  let a = pts[0], b = pts[pts.length - 1];
+  for (let i = 0; i < pts.length; i++) if (pts[i][0] <= u) a = pts[i];
+  for (let i = pts.length - 1; i >= 0; i--) if (pts[i][0] >= u) b = pts[i];
+  if (u >= pts[pts.length - 1][0]) b = a;
+  const k = a === b || b[0] === a[0] ? 0 : ease(clamp((u - a[0]) / (b[0] - a[0])));
+  return a[1].map((v, i) => lerp(v, b[1][i], k));
+}
 
-                // Анимация инструментов (только на 1 шаге)
-                if (currentSimStep === 1) {
-                    if (hammerGroup) {
-                        hammerGroup.rotation.z = Math.sin(time) * 0.6 - 0.3; // Удары молотка
-                    }
-                    if (drillGroup) {
-                        drillGroup.position.x = -1.8 + Math.sin(time * 5) * 0.05; // Вибрация бормашины
-                    }
-                }
-            }
+/* ---------- Kamera ---------- */
+const CAM = { pos: new V3(1.65, 1.65, 1.3), look: new V3(-1.2, 0.75, -1.2), yaw: 0, pitch: 0, fov: 64, az: 0.75, el: 0.62, r: 7.2, iaz: 0, iel: 1.0, ir: 12 };
+function updCamera(dt, now) {
+  const k = S.snapCam ? 1 : 1 - Math.exp(-dt * 3.2), e = S.invE;
+  let tp = new V3(), tl = new V3();
+  if (S.view === 'innen') {
+    const c = camFor(S.phase, S.U[S.phase]); tp.set(c[0], c[1], c[2]); tl.set(c[3], c[4], c[5]);
+    if (S.phase === LAST && !S.dragging) CAM.yaw = 0.45 * Math.sin(now * 0.18);
+    tp.y += 0.015 * Math.sin(now * 0.7);
+    const d = tl.clone().sub(tp), len = d.length(); let yaw = Math.atan2(d.x, d.z) + CAM.yaw, pit = Math.asin(d.y / len) + CAM.pitch; pit = clamp(pit, -1.35, 1.2);
+    tl.copy(tp).add(new V3(Math.sin(yaw) * Math.cos(pit), Math.sin(pit), Math.cos(yaw) * Math.cos(pit)).multiplyScalar(2));
+  } else {
+    const c = new V3(0, 0.75, 0); tl.copy(c); tp.set(Math.sin(CAM.az) * Math.cos(CAM.el), Math.sin(CAM.el), Math.cos(CAM.az) * Math.cos(CAM.el)).multiplyScalar(CAM.r).add(c);
+  }
+  if (e > 0) { const c = INV.center.clone(), ip = new V3(Math.sin(CAM.iaz) * Math.cos(CAM.iel), Math.sin(CAM.iel), Math.cos(CAM.iaz) * Math.cos(CAM.iel)).multiplyScalar(CAM.ir).add(c); tp.lerp(ip, e); tl.lerp(c, e); }
+  CAM.pos.lerp(tp, k); CAM.look.lerp(tl, k); camera.position.copy(CAM.pos); camera.lookAt(CAM.look);
+  const fov = lerp(S.view === 'innen' ? CAM.fov : 45, 50, e); if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = lerp(camera.fov, fov, S.snapCam ? 1 : 0.15); camera.updateProjectionMatrix(); }
+  // Schnittansicht: Wände zur Kamera ausblenden
+  const v = CAM.pos.clone().setY(0).normalize(), cut = S.view !== 'innen' || e > 0.5;
+  WALLS.forEach((w, i) => wallGroups[i].visible = !(cut && w.n.dot(v) < -0.3));
+  LAY.ceiling.visible = !cut; LAY.lamp.visible = !cut;
+  root.visible = e < 0.5; invRoot.visible = e >= 0.5;
+  S.snapCam = false;
+}
 
-            if (currentSimStep >= 2) {
-                // Стены и пол становятся светлыми (Грунтовка и Штукатурка)
-                wallMaterial.color.lerp(new THREE.Color(0xdddddd), 0.05);
-                floorMaterial.color.lerp(new THREE.Color(0xcccccc), 0.05);
-            }
+/* ---------- Partikel: Staub, Wasser, Glanz ---------- */
+let dust, water, sparkle;
+function points(n, size, color, opacity, additive) {
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
+  const m = new THREE.PointsMaterial({ size, color, transparent: true, opacity, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
+  const p = new THREE.Points(g, m); p.frustumCulled = false; p.userData.seed = Array.from({ length: n }, () => [Math.random(), Math.random(), Math.random(), Math.random()]); scene.add(p); return p;
+}
+function updParticles(now) {
+  const U = S.U, p = S.phase, room = S.invE < 0.5;
+  // Staub beim Abstemmen / Schaben
+  let dp = null, di = 0;
+  if (p === 2 && U[2] > 0.04 && U[2] < 0.94) { const r = oldFront(); dp = r.pos.clone().addScaledVector(r.wi >= 0 ? r.w.n : UP, 0.08); di = 1; }
+  if (p === 3 && U[3] < 0.85) { dp = TOOL.schaufel.obj.position.clone(); di = 0.6; }
+  dust.visible = room && !!dp; if (dp) { const a = dust.geometry.attributes.position; dust.userData.seed.forEach((s, i) => { const l = (now * 0.35 + s[0]) % 1; a.setXYZ(i, dp.x + (s[1] - 0.5) * 0.9 * l, dp.y + l * 0.55 * s[3], dp.z + (s[2] - 0.5) * 0.9 * l); }); a.needsUpdate = true; dust.material.opacity = 0.45 * di; }
+  // Wasser-Test der Armatur
+  const wOn = p === 9 && U[9] > 0.7 && U[9] < 0.98; water.visible = room && wOn;
+  if (wOn) { const h = LAY.newFix.userData.hand.localToWorld(new V3(0, 0.05, 0.05)), a = water.geometry.attributes.position; water.userData.seed.forEach((s, i) => { const l = (now * 0.9 + s[0]) % 1; a.setXYZ(i, h.x + (s[1] - 0.5) * 0.12 + l * 0.35, h.y - l * l * 1.9, h.z + (s[2] - 0.5) * 0.12 + l * 0.3); }); a.needsUpdate = true; }
+  // Glanz am Ende
+  const sOn = (p === 10 && U[10] > 0.8) || p === LAST; sparkle.visible = room && sOn;
+  if (sOn) { sparkle.material.opacity = 0.5 + 0.5 * Math.sin(now * 3); sparkle.material.size = 0.035 + 0.02 * Math.sin(now * 5); }
+}
 
-            if (currentSimStep >= 3) {
-                // Появляется новая плитка
-                if (newTileMaterial.opacity < 1) newTileMaterial.opacity += 0.02;
-            }
+/* ---------- 3D-Beschriftungen ---------- */
+const LBL = [];
+function label(html, cls, pos, vis, stag) { const el = document.createElement('div'); el.className = 'sim-lbl ' + (cls || ''); el.innerHTML = html; document.getElementById('simLabels').appendChild(el); LBL.push({ el, pos, vis, on: false, stag: stag || 0 }); return el; }
+function buildLabels() {
+  TOOLS.forEach(t => label(t.name, 'tool', () => t.obj.position.clone().add(new V3(0, (t.obj.userData.lean ? 0.2 : Math.max(0.08, t.size.y)) * t.obj.scale.x + 0.06, 0)), () => t.obj.visible && t.obj.userData.vis > 0.6 && (S.invE > 0.5 || t.animNow), (t.invI % 2) * 17));
+  MATS.forEach(m => label(`<b>${m.name}</b><span>${m.menge}</span><em>${m.preis}</em>`, 'mat', () => { const o = new V3(m.off.x, 0, m.off.z).applyQuaternion(m.obj.quaternion); return m.obj.position.clone().add(o).setY(m.obj.position.y + Math.min(m.size.y, 1.2) * m.obj.scale.y + 0.1); }, () => m.obj.visible && m.obj.userData.vis > 0.6, (m.invI % 2) * 17));
+  INV.rows.forEach((r, i) => { if (i === INV.rows.length - 1) return; label(r.title, 'cat', () => new V3(r.x0 - 0.45, 0.05, r.z), () => S.invE > 0.6); });
+  const U = () => S.U, ph = () => S.phase;
+  label('Wand: 25,00 m × 1,30 m = <b>32,50 m²</b>', 'dim', () => wp(WALLS[0], 2.6, 1.42, 0.05), () => ph() === 1 && U()[1] > 0.3 && U()[1] < 0.95 && S.invE < 0.5);
+  label('Tür: 0,90 × 1,30 m = <b>−1,17 m²</b>', 'dim red', () => wp(WALLS[2], 0.8, 1.42, 0.05), () => ph() === 1 && U()[1] > 0.48 && U()[1] < 0.95 && S.invE < 0.5);
+  label('Boden: <b>13,40 m²</b>', 'dim blue', () => new V3(-0.4, 0.06, -0.2), () => ph() === 1 && U()[1] > 0.62 && U()[1] < 0.95 && S.invE < 0.5);
+  label('Fliesenhöhe <b>1,30 m</b>', 'dim', () => wp(WALLS[3], 0.6, 1.36, 0.05), () => ((ph() === 1 && U()[1] > 0.12) || (ph() === 7 && U()[7] < 0.1)) && S.invE < 0.5);
+  label('Schäden im Beton', 'warn', () => (LAY.spots.find(s => s.wi === 0) || LAY.spots[0]).pos.clone().add(new V3(0, 0.15, 0)), () => (ph() === 2 && U()[2] > 0.3) || (ph() === 3) ? S.invE < 0.5 : false);
+  label('Entsorgung ≈ 100–750 € +', 'mat', () => TOOL.schuttwanne.obj.position.clone().add(new V3(0, 0.55, 0)), () => ph() === 3 && U()[3] > 0.55 && TOOL.schuttwanne.obj.visible && S.invE < 0.5);
+  PIPE_S.forEach(s => label('✔ dicht', 'ok', () => wp(WALLS[0], s, PIPE_Y - 0.1, 0.1), () => ph() === 9 && U()[9] > 0.8 && S.invE < 0.5));
+}
+const _v = new V3();
+function updLabels() {
+  const W = container.clientWidth, H = container.clientHeight, inv = S.invE > 0.5;
+  const box = document.getElementById('simLabels'); if (box.classList.contains('compact') !== inv) { box.classList.toggle('compact', inv); document.querySelector('.sim-slide').classList.toggle('inv', inv); }
+  LBL.forEach(l => {
+    let on = S.labelsOn && l.vis();
+    if (on) { _v.copy(l.pos()).project(camera); on = _v.z < 1 && Math.abs(_v.x) < 1.05 && Math.abs(_v.y) < 1.05; if (on) l.el.style.transform = `translate(-50%,-100%) translate(${(_v.x * 0.5 + 0.5) * W}px,${(-_v.y * 0.5 + 0.5) * H - (inv ? l.stag : 0)}px)`; }
+    if (on !== l.on) { l.el.style.display = on ? 'block' : 'none'; l.on = on; }
+  });
+}
 
-            if (currentSimStep >= 4) {
-                // Появляется душевая кабина
-                if (glassMaterial.opacity < 0.5) glassMaterial.opacity += 0.02;
-                if (armaturMaterial.opacity < 1) armaturMaterial.opacity += 0.02;
-            }
+/* ---------- HUD ---------- */
+const $ = id => document.getElementById(id);
+let hudKey = '';
+function buildTimeline() {
+  const tl = $('simTimeline'); tl.innerHTML = '';
+  PHASES.forEach((ph, p) => {
+    if (!ph.dur) return;
+    const seg = document.createElement('div'); seg.className = 'tl-seg'; seg.style.flex = String(ph.work[1] + (ph.wait ? 5 : 0));
+    seg.title = `${ph.step ? 'Schritt ' + ph.step + ': ' : ''}${ph.title} · ${ph.work[0]}–${ph.work[1]} Std.`;
+    seg.innerHTML = `<div class="tl-work" style="flex:${ph.work[1]}"><i></i><span>${ph.short}${ph.work[1] >= 8 ? ' · ' + ph.work[0] + '–' + ph.work[1] + ' h' : ''}</span></div>` + (ph.wait ? `<div class="tl-wait" style="flex:5"><i></i><span>☾</span></div>` : '');
+    seg.addEventListener('click', e => { e.stopPropagation(); jump(p); });
+    tl.appendChild(seg); ph.el = seg;
+  });
+}
+function updHUD() {
+  const p = S.phase, ph = PHASES[p], u = S.U[p], w = S.W[p], waiting = ph.wait && S.t > ph.dur && w < 1;
+  const key = p + '|' + S.invTarget;
+  if (key !== hudKey) {
+    hudKey = key;
+    $('simStep').textContent = p === 0 ? 'AUSGANGSLAGE' : p === LAST ? 'ERGEBNIS' : `SCHRITT ${ph.step} / 9${p === 2 ? ' · TEIL 1' : p === 3 ? ' · TEIL 2' : ''}`;
+    $('simTitle').textContent = ph.title; $('simDesc').textContent = ph.desc;
+    $('simBlock').textContent = ph.block ? 'Zeit lt. Plan: ' + ph.block : ph.share ? ph.share : '';
+    $('simBlock').style.display = ph.block || ph.share ? 'block' : 'none';
+    // Seitenpanel
+    let h = '';
+    if (S.invTarget) {
+      h += `<h4>Werkzeuge A–Z (Blatt 2)</h4><div class="chips">${TOOLS.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).map(t => `<span>${t.name}</span>`).join('')}</div>`;
+      h += `<h4>Baustoffe (Blatt 3) · Preise (Blatt 4)</h4>` + MATS.map(m => `<div class="mrow"><b>${m.name}</b><span>${m.menge}</span><em>${m.preis}</em></div>`).join('');
+      h += `<div class="mrow tot"><b>Werkzeuge & Gerätemiete</b><em>≈ 600 – 800 €</em></div>`;
+    } else if (p === LAST) {
+      h += `<h4>Gesamtaufwand</h4><div class="big">59 – 98 Std.</div><div class="note">aktive Arbeitszeit einer Person (Blatt 6)<br>+ Trocknungszeiten laut Datenblatt</div>`;
+      h += `<div class="mrow"><b>Fliesenfläche</b><em>49,20 m² (≈ 35 m² Wand + 15 m² Boden)</em></div>`;
+      h += `<h4>Budget (ohne Arbeitslohn)</h4>` + BUDGET.map((b, i) => `<div class="mrow${i === 3 ? ' tot' : ''}"><b>${b[0]}</b><em>${b[1]}</em></div>`).join('');
+      h += `<div class="note">Einfache Einkaufsliste: ≈ 1.330 € – nicht mit der erweiterten Kalkulation vermischen.<br>Marktvergleich: Globus (Kaltenkirchen) hat insgesamt mehr überzeugt.</div>`;
+    } else if (p > 0) {
+      const tools = TOOLS.filter(t => t.ph.includes(p)), mats = MATS.filter(m => m.ph === p);
+      h += `<h4>Werkzeuge im Einsatz (${tools.length})</h4><div class="chips">${tools.map(t => `<span data-k="${t.key}">${t.name}</span>`).join('')}</div>`;
+      if (mats.length) h += `<h4>Material (Blatt 3 · Preise Blatt 4)</h4>` + mats.map(m => `<div class="mrow"><b>${m.name}</b><span>${m.menge}</span><em>${m.preis}</em></div>`).join('');
+      if (p === 3) h += `<div class="mrow tot"><b>Entsorgung</b><em>≈ 100 – 750 € oder mehr</em></div>`;
+    } else {
+      h += `<h4>Auftrag</h4><div class="mrow"><b>Wände halbhoch</b><em>25,00 m × 1,30 m</em></div><div class="mrow"><b>Tür</b><em>0,90 × 2,00 m</em></div><div class="mrow"><b>Boden</b><em>ca. 13,40 m²</em></div><div class="mrow"><b>Neu</b><em>Fliesen Wand + Boden, Putz, Duscharmatur</em></div><div class="note">Klick / Leertaste startet die Simulation.</div>`;
+    }
+    $('simSide').innerHTML = h; TOOLS.forEach(t => t.chipOn = undefined);
+    PHASES.forEach((q, i) => { if (q.el) q.el.classList.toggle('on', i === p); });
+    $('simInvBtn').classList.toggle('on', !!S.invTarget); $('simInvHead').style.display = S.invTarget ? 'block' : 'none';
+  }
+  TOOLS.forEach(t => { if (t.chipOn !== t.animNow) { t.chipOn = t.animNow; const c = document.querySelector(`#simSide span[data-k="${t.key}"]`); if (c) c.classList.toggle('act', !!t.animNow); } });
+  // Teilschritt
+  let sub = ''; (SUBS[p] || []).forEach(([t, s]) => { if (u >= t) sub = s; }); if (waiting) sub = '☾ Trocknungszeit – Baustelle ruht';
+  if ($('simSub').textContent !== sub) $('simSub').textContent = sub;
+  // Zeit
+  const a = lerp(ph.cumStart[0], ph.cumEnd[0], u), b = lerp(ph.cumStart[1], ph.cumEnd[1], u);
+  $('simHours').textContent = `${fmt(a)} – ${fmt(b)}`;
+  $('simHoursBar').style.width = (b / 98 * 100).toFixed(1) + '%';
+  const dryBox = $('simDry');
+  if (ph.wait && (waiting || (w >= 1 && S.t > ph.dur))) { dryBox.style.display = 'block'; $('simDryTxt').textContent = ph.wait.txt; $('simDryVal').textContent = ph.wait.val; $('simDryBar').style.width = (w * 100).toFixed(0) + '%'; }
+  else dryBox.style.display = 'none';
+  PHASES.forEach((q, i) => { if (!q.el) return; const wk = q.el.querySelector('.tl-work i'), wt = q.el.querySelector('.tl-wait i'); wk.style.width = (S.U[i] * 100) + '%'; if (wt) wt.style.width = (S.W[i] * 100) + '%'; });
+  const done = S.t >= phaseLen(p);
+  $('simNext').classList.toggle('pulse', done && p < LAST); $('simHint').style.opacity = done && p < LAST ? 1 : 0.55;
+  document.querySelector('.sim-slide').classList.toggle('night', S.night > 0.4);
+}
 
-            simRenderer.render(simScene, simCamera);
-        }
+/* ---------- Steuerung ---------- */
+function jump(p, snap = true) { S.phase = clamp(p, 0, LAST); S.t = 0; S.snap = snap; S.snapCam = false; CAM.yaw = 0; CAM.pitch = 0; hudKey = ''; if (S.invTarget) { S.invTarget = 0; } }
+function next() { if (S.phase < LAST) jump(S.phase + 1, false); }
+function prev() { if (S.phase > 0) jump(S.phase - 1); }
+function setView(v) { S.view = v || (S.view === 'innen' ? 'schnitt' : 'innen'); $('simViewBtn').textContent = S.view === 'innen' ? 'Ansicht: Innen' : 'Ansicht: Schnitt'; if (S.view === 'schnitt') { CAM.az = 0.75; CAM.el = 0.62; } }
+function toggleInv() { S.invTarget = S.invTarget ? 0 : 1; hudKey = ''; }
+function bindInput() {
+  let sx = 0, sy = 0, lx = 0, ly = 0;
+  container.addEventListener('pointerdown', e => { S.dragging = true; S.dragged = false; sx = lx = e.clientX; sy = ly = e.clientY; });
+  window.addEventListener('pointerup', () => { S.dragging = false; });
+  window.addEventListener('pointermove', e => {
+    if (!S.dragging) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+    if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 6) S.dragged = true;
+    if (S.invE > 0.5) { CAM.iaz -= dx * 0.006; CAM.iel = clamp(CAM.iel + dy * 0.004, 0.25, 1.4); }
+    else if (S.view === 'innen') { CAM.yaw -= dx * 0.0045; CAM.pitch = clamp(CAM.pitch - dy * 0.0035, -0.9, 0.9); }
+    else { CAM.az -= dx * 0.006; CAM.el = clamp(CAM.el + dy * 0.004, 0.12, 1.45); }
+  });
+  container.addEventListener('wheel', e => { e.preventDefault(); const d = Math.sign(e.deltaY);
+    if (S.invE > 0.5) CAM.ir = clamp(CAM.ir + d * 0.6, 4, 16); else if (S.view === 'innen') CAM.fov = clamp(CAM.fov + d * 4, 30, 85); else CAM.r = clamp(CAM.r + d * 0.5, 3.5, 12); }, { passive: false });
+  container.addEventListener('dblclick', e => { e.stopPropagation(); CAM.yaw = 0; CAM.pitch = 0; CAM.fov = 64; });
+  const btn = (id, fn) => $(id).addEventListener('click', e => { e.stopPropagation(); e.currentTarget.blur(); fn(); });
+  btn('simPrevBtn', prev); btn('simNext', next); btn('simViewBtn', () => setView()); btn('simInvBtn', toggleInv);
+  btn('simAutoBtn', () => { S.auto = !S.auto; $('simAutoBtn').classList.toggle('on', S.auto); });
+  btn('simLblBtn', () => { S.labelsOn = !S.labelsOn; $('simLblBtn').classList.toggle('on', S.labelsOn); });
+  btn('simFsBtn', () => { const d = document; if (!d.fullscreenElement) (d.documentElement.requestFullscreen || function () { }).call(d.documentElement); else d.exitFullscreen(); });
+  btn('simRestart', () => jump(0));
+  document.querySelectorAll('.sim-ui').forEach(el => { el.addEventListener('click', e => e.stopPropagation()); el.addEventListener('pointerdown', e => e.stopPropagation()); });
+}
+function resize() { if (!renderer) return; const w = container.clientWidth, h = container.clientHeight; if (!w || !h) return; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+
+/* ---------- Hauptschleife ---------- */
+let lastT = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const now = ts / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0.016); lastT = now;
+  if (!S.active) return;
+  if (!S.invTarget) S.t += dt;
+  const L = phaseLen(S.phase);
+  if (S.auto && S.phase < LAST && S.t > L + 1.5) next();
+  S.invE = lerp(S.invE || 0, S.invTarget, 1 - Math.exp(-dt * 3)); if (Math.abs(S.invE - S.invTarget) < 0.002) S.invE = S.invTarget;
+  computeUW();
+  TOOLS.forEach(t => t.animNow = !!(ANIM[t.key] && t.ph.includes(S.phase) && ANIM[t.key](S.phase, S.U[S.phase], now)));
+  updLayers(now); updKit(dt, now); updParticles(now); updCamera(dt, now); updHUD(); updLabels();
+  S.snap = false;
+  renderer.render(scene, camera);
+}
+
+/* ---------- Start ---------- */
+function init() {
+  container = $('three-container');
+  if (typeof THREE === 'undefined') throw new Error('Three.js nicht geladen');
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.localClippingEnabled = true;
+  container.insertBefore(renderer.domElement, container.firstChild);
+  scene = new THREE.Scene(); scene.background = lin(0x1b2128);
+  camera = new THREE.PerspectiveCamera(64, 1, 0.03, 80);
+  hemi = new THREE.HemisphereLight(0xffffff, 0x6b5f52, 0.62); scene.add(hemi);
+  spot = new THREE.SpotLight(0xfff1d8, 1.25, 12, 1.25, 0.65, 1.2); spot.position.set(0, RH - 0.08, 0); spot.target.position.set(0, 0, 0);
+  spot.castShadow = true; spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -0.0006; spot.shadow.camera.near = 0.1; spot.shadow.camera.far = 6;
+  scene.add(spot, spot.target);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.25); fill.position.set(3, 5, 4); scene.add(fill);
+  root = new THREE.Group(); scene.add(root);
+  buildMaterials(); buildKit(); buildRoom(); buildTiles(); buildLayers(); buildFixtures(); buildKit3D(); buildInventory();
+  LAY.byTc = LAY.oldAll.slice().sort((a, b) => a.tc - b.tc);
+  const back = LAY.newSets[1], pr = back.recs.find(r => r.r.s0 <= PIPE_S[0] && r.r.s1 >= PIPE_S[0] && r.r.y0 <= PIPE_Y && r.r.y1 >= PIPE_Y); LAY.pipeT = pr ? pr.t0 : 0.6;
+  dust = points(260, 0.035, 0xcfc6b5, 0.45); water = points(180, 0.022, 0x9fd8ff, 0.8); sparkle = points(70, 0.04, 0xffffff, 0.8, true);
+  const sp = sparkle.geometry.attributes.position; sparkle.userData.seed.forEach((s, i) => { const w = WALLS[i % 4], st = s[0] * w.L; if (w.door && st > DOOR.s0 && st < DOOR.s1) { sp.setXYZ(i, 0, -5, 0); return; } const q = wp(w, st, s[1] * 1.25, 0.03); sp.setXYZ(i, q.x, q.y, q.z); }); sp.needsUpdate = true;
+  buildLabels(); buildTimeline(); bindInput(); computeUW();
+  window.addEventListener('resize', resize); document.addEventListener('fullscreenchange', () => setTimeout(resize, 60));
+  S.ready = true; S.snap = true; S.snapCam = true; resize(); requestAnimationFrame(loop);
+}
+window.Sim = {
+  enter() { if (!S.ready) { try { init(); } catch (err) { console.error(err); $('simError').style.display = 'flex'; $('simError').querySelector('span').textContent = err.message; return; } } S.active = true; resize(); lastT = 0; },
+  leave() { S.active = false; },
+  next, prev, jump, setView, toggleInv,
+  key(k) { if (k === 'i') toggleInv(); else if (k === 'v') setView(); else if (k === 'l') $('simLblBtn').click(); else if (k === 'f') $('simFsBtn').click(); else if (k === 'r') jump(0); else if (k === 'a') $('simAutoBtn').click(); },
+  get phase() { return S.phase; }, get ready() { return S.ready; },
+  consumeDrag() { const d = S.dragged; S.dragged = false; return d; },
+  _S: S
+};
+
+        })();
     </script>
 </body>
 </html>
